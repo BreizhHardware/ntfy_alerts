@@ -1,7 +1,11 @@
 import requests
 import time
 import os
-from sys import argv as args
+import logging
+
+# Configurer le logger
+logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
+logger = logging.getLogger(__name__)
 
 watched_repos_list = ['dani-garcia/vaultwarden', 'jellyfin/jellyfin', 'linuxserver/Heimdall',
                       'jlesage/docker-nginx-proxy-manager', 'linuxserver/docker-speedtest-tracker',
@@ -26,7 +30,7 @@ def get_latest_releases(watched_repos):
                 "html_url": release_info["html_url"]
             })
         else:
-            print(f"Failed to fetch release info for {repo}")
+            logger.error(f"Failed to fetch release info for {repo}")
     return releases
 
 
@@ -38,7 +42,7 @@ def send_to_ntfy(releases, auth, url):
 
         # Vérifier si la version a changé depuis la dernière fois
         if app_name in previous_versions and previous_versions[app_name] == version_number:
-            print(f"La version de {app_name} n'a pas changé. Pas de notification envoyée.")
+            logger.info(f"La version de {app_name} n'a pas changé. Pas de notification envoyée.")
             continue  # Passer à l'application suivante
 
         message = f"Nouvelle version: {version_number}\nPour: {app_name}\n{app_url}"
@@ -48,10 +52,10 @@ def send_to_ntfy(releases, auth, url):
         headers = {"Authorization": f"Basic {auth}", "Content-Type": "text/plain"}
         response = requests.post(f"{url}", headers=headers, data=message)
         if response.status_code == 200:
-            print(f"Message envoyé à Ntfy pour {app_name}")
+            logger.info(f"Message envoyé à Ntfy pour {app_name}")
             continue
         else:
-            print(f"Échec de l'envoi du message à Ntfy. Code d'état : {response.status_code}")
+            logger.error(f"Échec de l'envoi du message à Ntfy. Code d'état : {response.status_code}")
 
 
 if __name__ == "__main__":
@@ -67,6 +71,6 @@ if __name__ == "__main__":
                 send_to_ntfy(latest_release, auth, ntfy_url)
             time.sleep(timeout)  # Attendre une heure avant de vérifier à nouveau
     else:
-        print("Usage: python ntfy.py")
-        print("auth: can be generataed by the folowing command: echo -n 'username:password' | base64 and need to be stored in a file named auth.txt")
-        print("NTFY_URL: the url of the ntfy server need to be stored in an environment variable named NTFY_URL")
+        logger.error("Usage: python ntfy.py")
+        logger.error("auth: can be generataed by the folowing command: echo -n 'username:password' | base64 and need to be stored in a file named auth.txt")
+        logger.error("NTFY_URL: the url of the ntfy server need to be stored in an environment variable named NTFY_URL")
