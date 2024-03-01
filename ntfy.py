@@ -15,6 +15,7 @@ watched_repos_list = ['dani-garcia/vaultwarden', 'jellyfin/jellyfin', 'linuxserv
 # Dictionnaire pour stocker les versions précédentes
 previous_versions = {}
 
+logger.info("Démarrage de la surveillance des versions...")
 
 def get_latest_releases(watched_repos):
     releases = []
