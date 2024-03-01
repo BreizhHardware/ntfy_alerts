@@ -32,6 +32,7 @@ services:
       - GHNTFY_TOKEN= # Default is empty (Github token)
     restart: unless-stopped
 ````
+GHNTFY_TOKEN, need to have repo, read:org and read:user
 ## TODO:
 - [x] Dockerize the ntfy.py
 - [x] Add the watched repos list as a parameter
