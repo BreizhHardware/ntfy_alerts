@@ -48,6 +48,7 @@ def send_to_ntfy(releases, auth, url):
         headers = {"Authorization": f"Basic {auth}", "Content-Type": "text/plain"}
         response = requests.post(f"{url}", headers=headers, data=message)
         if response.status_code == 200:
+            print(f"Message envoyé à Ntfy pour {app_name}")
             continue
         else:
             print(f"Échec de l'envoi du message à Ntfy. Code d'état : {response.status_code}")
