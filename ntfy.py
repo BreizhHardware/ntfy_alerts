@@ -22,7 +22,7 @@ if not watched_repos_list:
     exit(1)
 
 # Connexion à la base de données pour stocker les versions précédentes
-db_path = 'ghntfy_versions.db'
+db_path = '/github-ntfy/ghntfy_versions.db'
 conn = sqlite3.connect(db_path)
 cursor = conn.cursor()
 
