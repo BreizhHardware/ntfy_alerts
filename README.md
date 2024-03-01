@@ -18,7 +18,7 @@ If you want to use the docker image you can use the following docker-compose fil
 version: '3'
 services:
   github-ntfy:
-    image: breizhhardware/github-ntfy
+    image: breizhhardware/github-ntfy:latest
     container_name: github-ntfy
     environment:
       - USERNAME=username # Required
