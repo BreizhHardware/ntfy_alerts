@@ -21,17 +21,17 @@ services:
     image: breizhhardware/github-ntfy
     container_name: github-ntfy
     environment:
-      - USERNAME=username
-      - PASSWORD=password
-      - NTFY_URL=ntfy_url
+      - USERNAME=username # Required
+      - PASSWORD=password # Required
+      - NTFY_URL=ntfy_url # Required
+      - GHNTFY_TIMEOUT=timeout # Default is 3600 (1 hour)
+      - GHNTFY_WATCHED_REPOS=["username/repo1", "username/repo2"] # Default is empty
     restart: unless-stopped
 ````
-Acctualy the watched repos list is hardcoded in the ntfy.py file under the name of watched_repos_list.
 ## TODO:
 - [x] Dockerize the ntfy.py
-- [ ] Add the watched repos list as a parameter
-- [ ] Add the watched repos list as a file
-- [ ] Add the watched repos list as a database
+- [x] Add the watched repos list as a parameter
+- [ ] Add the application version as a database
 - [ ] Add the watched repos list as a web interface
 # Bash setup-notify.sh
 ## Description:

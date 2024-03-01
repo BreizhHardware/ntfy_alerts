@@ -2,15 +2,18 @@ import requests
 import time
 import os
 import logging
+import json
 
 # Configurer le logger
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
 logger = logging.getLogger(__name__)
 
-watched_repos_list = ['dani-garcia/vaultwarden', 'jellyfin/jellyfin', 'linuxserver/Heimdall',
-                      'jlesage/docker-nginx-proxy-manager', 'linuxserver/docker-speedtest-tracker',
-                      'linuxserver/docker-xbackbone', 'Fallenbagel/jellyseerr', 'FlareSolverr/FlareSolverr',
-                      'linuxserver/docker-jackett', 'linuxserver/docker-radarr', 'linuxserver/docker-sonarr']
+repo_list_env = os.environ.get('GHREPO')
+watched_repos_list = json.loads(repo_list_env) if repo_list_env else []
+
+if not watched_repos_list:
+    logger.error("Aucun dépôt n'a été spécifié. Veuillez spécifier les dépôts à surveiller dans l'environnement GHREPO")
+    exit(1)
 
 # Dictionnaire pour stocker les versions précédentes
 previous_versions = {}

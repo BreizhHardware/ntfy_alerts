@@ -11,6 +11,7 @@ RUN pip install -r requirements.txt
 ENV USERNAME="" \
     PASSWORD="" \
     NTFY_URL="" \
-    GHNTFY_TIMEOUT="3600"
+    GHNTFY_TIMEOUT="3600" \
+    GHREPO=""
 
 ENTRYPOINT ["/entrypoint.sh"]
