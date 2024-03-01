@@ -31,7 +31,7 @@ services:
 ## TODO:
 - [x] Dockerize the ntfy.py
 - [x] Add the watched repos list as a parameter
-- [ ] Add the application version as a database
+- [x] Add the application version as a database
 - [ ] Add the watched repos list as a web interface
 # Bash setup-notify.sh
 ## Description:
