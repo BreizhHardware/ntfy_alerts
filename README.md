@@ -14,6 +14,7 @@ ntfy_url: the url of the ntfy server including the topic
 
 Acctualy the watched repos list is hardcoded in the ntfy.py file under the name of watched_repos_list.
 ## TODO:
+- [ ] Dockerize the ntfy.py
 - [ ] Add the watched repos list as a parameter
 - [ ] Add the watched repos list as a file
 - [ ] Add the watched repos list as a database
