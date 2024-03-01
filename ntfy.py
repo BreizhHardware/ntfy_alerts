@@ -58,13 +58,14 @@ if __name__ == "__main__":
     with open('/auth.txt', 'r') as f:
         auth = f.read().strip()
     ntfy_url = os.environ.get('NTFY_URL')
+    timeout = float(os.environ.get('GHNTFY_TIMEOUT'))
 
     if auth and ntfy_url:
         while True:
             latest_release = get_latest_releases(watched_repos_list)
             if latest_release:
                 send_to_ntfy(latest_release, auth, ntfy_url)
-            time.sleep(3600)  # Attendre une heure avant de vérifier à nouveau
+            time.sleep(timeout)  # Attendre une heure avant de vérifier à nouveau
     else:
         print("Usage: python ntfy.py")
         print("auth: can be generataed by the folowing command: echo -n 'username:password' | base64 and need to be stored in a file named auth.txt")
