@@ -1,5 +1,6 @@
 # ntfy_alerts
 Personal ntfy alerts system
+
 feel free to contribute and to fork
 
 # Python ntfy.py
