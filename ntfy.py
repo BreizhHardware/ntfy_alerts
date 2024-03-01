@@ -1,5 +1,6 @@
 import requests
 import time
+import os
 from sys import argv as args
 
 watched_repos_list = ['dani-garcia/vaultwarden', 'jellyfin/jellyfin', 'linuxserver/Heimdall',
@@ -53,12 +54,17 @@ def send_to_ntfy(releases, auth, url):
 
 
 if __name__ == "__main__":
-    if len(args) == 3:
+    with open('/auth.txt', 'r') as f:
+        auth = f.read().strip()
+    ntfy_url = os.environ.get('NTFY_URL')
+
+    if auth and ntfy_url:
         while True:
             latest_release = get_latest_releases(watched_repos_list)
             if latest_release:
-                send_to_ntfy(latest_release, args[1], args[2])
+                send_to_ntfy(latest_release, auth, ntfy_url)
             time.sleep(3600)  # Attendre une heure avant de vérifier à nouveau
     else:
-        print("Usage: python ntfy.py <auth> <ntfy_url>")
-        print("auth: can be generataed by the folowing command: echo -n 'username:password' | base64")
+        print("Usage: python ntfy.py")
+        print("auth: can be generataed by the folowing command: echo -n 'username:password' | base64 and need to be stored in a file named auth.txt")
+        print("NTFY_URL: the url of the ntfy server need to be stored in an environment variable named NTFY_URL")

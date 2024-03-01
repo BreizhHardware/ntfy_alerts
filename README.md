@@ -6,15 +6,29 @@ Personal ntfy alerts system
 ## Description:
 This script is used to watch the github repos and send a notification to the ntfy server when a new release is published.
 ## Utilisation:
-````python
-python ntfy.py <auth> <ntfy_url>
-````
+auth and ntfy_url are required to be set as environment variables.
 auth: can be generataed by the folowing command: echo -n 'username:password' | base64
 ntfy_url: the url of the ntfy server including the topic
-
+````python
+python ntfy.py
+````
+## Docker:
+If you want to use the docker image you can use the following docker-compose file:
+````yaml
+version: '3'
+services:
+  github-ntfy:
+    image: breizhhardware/github-ntfy
+    container_name: github-ntfy
+    environment:
+      - USERNAME=username
+      - PASSWORD=password
+      - NTFY_URL=ntfy_url
+    restart: unless-stopped
+````
 Acctualy the watched repos list is hardcoded in the ntfy.py file under the name of watched_repos_list.
 ## TODO:
-- [ ] Dockerize the ntfy.py
+- [x] Dockerize the ntfy.py
 - [ ] Add the watched repos list as a parameter
 - [ ] Add the watched repos list as a file
 - [ ] Add the watched repos list as a database
