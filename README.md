@@ -31,6 +31,8 @@ services:
       - GHNTFY_TIMEOUT=timeout # Default is 3600 (1 hour)
       - GHREPO=["username/repo1", "username/repo2"] # Default is empty
       - GHNTFY_TOKEN= # Default is empty (Github token)
+    volumes:
+      - /path/to/github-ntfy:/github-ntfy/
     restart: unless-stopped
 ````
 GHNTFY_TOKEN, need to have repo, read:org and read:user
