@@ -36,6 +36,8 @@ services:
     restart: unless-stopped
 ````
 GHNTFY_TOKEN, need to have repo, read:org and read:user
+
+Docker Hub repo: https://hub.docker.com/r/breizhhardware/github-ntfy
 ## TODO:
 - [x] Dockerize the ntfy.py
 - [x] Add the watched repos list as a parameter
