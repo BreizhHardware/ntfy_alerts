@@ -90,7 +90,7 @@ def send_to_ntfy(releases, auth, url):
             "Authorization": f"Basic {auth}",
             "Title": f"New version for {app_name}",
             "Priority": "urgent",
-            "Content-Type": "text/plain",
+            "Markdown": "yes",
             "Actions": f"view, Update {app_name}, {app_url}, clear=true"}
         response = requests.post(f"{url}", headers=headers, data=message)
         if response.status_code == 200:
