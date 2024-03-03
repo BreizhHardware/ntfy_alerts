@@ -1,6 +1,7 @@
 # ntfy_alerts
 Personal ntfy alerts system
 
+feel free to contribute and to fork
 
 # Python ntfy.py
 ## Description:
@@ -30,9 +31,13 @@ services:
       - GHNTFY_TIMEOUT=timeout # Default is 3600 (1 hour)
       - GHREPO=["username/repo1", "username/repo2"] # Default is empty
       - GHNTFY_TOKEN= # Default is empty (Github token)
+    volumes:
+      - /path/to/github-ntfy:/github-ntfy/
     restart: unless-stopped
 ````
 GHNTFY_TOKEN, need to have repo, read:org and read:user
+
+Docker Hub repo: https://hub.docker.com/r/breizhhardware/github-ntfy
 ## TODO:
 - [x] Dockerize the ntfy.py
 - [x] Add the watched repos list as a parameter
