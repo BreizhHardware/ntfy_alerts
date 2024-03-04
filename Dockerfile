@@ -16,7 +16,8 @@ ENV USERNAME="" \
     PASSWORD="" \
     NTFY_URL="" \
     GHNTFY_TIMEOUT="3600" \
-    GHNTFY_TOKEN=""
+    GHNTFY_TOKEN="" \
+    FLASK_ENV=production
 
 # Exposer le port 5000 pour l'API et le port 80 pour le serveur web
 EXPOSE 5000 80

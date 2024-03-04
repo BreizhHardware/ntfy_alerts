@@ -4,6 +4,7 @@ import sqlite3
 
 app = Flask(__name__)
 CORS(app)
+app.logger.setLevel("WARNING")
 
 
 def get_db_connection():
@@ -23,7 +24,7 @@ def app_repo():
 
     # Vérifier si le champ 'repo' est présent dans les données JSON
     if not repo:
-        return jsonify({"error": "Le champ 'repo' est requis."}), 400
+        return jsonify({"error": "The repo field is required."}), 400
 
     # Établir une connexion à la base de données
     conn = get_db_connection()
@@ -34,12 +35,12 @@ def app_repo():
         cursor.execute("SELECT * FROM watched_repos WHERE repo=?", (repo,))
         existing_repo = cursor.fetchone()
         if existing_repo:
-            return jsonify({"error": f"Le dépôt {repo} existe déjà."}), 409
+            return jsonify({"error": f"The repo {repo} is already in the database."}), 409
 
         # Ajouter le dépôt à la base de données
         cursor.execute("INSERT INTO watched_repos (repo) VALUES (?)", (repo,))
         conn.commit()
-        return jsonify({"message": f"Le dépôt {repo} a été ajouté à la liste des dépôts surveillés."})
+        return jsonify({"message": f"The repo {repo} as been added to the watched repos."})
     finally:
         # Fermer la connexion à la base de données
         close_db_connection(conn)
@@ -57,4 +58,4 @@ def get_watched_repos():
 
 
 if __name__ == "__main__":
-    app.run(debug=True)
+    app.run(debug=False)

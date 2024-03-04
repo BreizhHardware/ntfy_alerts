@@ -5,7 +5,7 @@ import logging
 import sqlite3
 import subprocess
 
-# Configurer le logger
+# Configuring the logger
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(name)s - %(levelname)s - %(message)s')
 logger = logging.getLogger(__name__)
 
@@ -14,16 +14,16 @@ github_headers = {}
 if github_token:
     github_headers['Authorization'] = f"token {github_token}"
 
-# Connexion à la base de données pour stocker les versions précédentes
+# Connecting to the database to store previous versions
 conn = sqlite3.connect('/github-ntfy/ghntfy_versions.db', check_same_thread=False)
 cursor = conn.cursor()
 
-# Création de la table si elle n'existe pas
+# Creating the table if it does not exist
 cursor.execute('''CREATE TABLE IF NOT EXISTS versions
                   (repo TEXT PRIMARY KEY, version TEXT, changelog TEXT)''')
 conn.commit()
 
-logger.info("Démarrage de la surveillance des versions...")
+logger.info("Starting version monitoring...")
 
 conn2 = sqlite3.connect('/github-ntfy/watched_repos.db', check_same_thread=False)
 cursor2 = conn2.cursor()
@@ -75,25 +75,25 @@ def get_changelog(repo):
             latest_release_list = releases[0]
             if 'body' in latest_release_list:
                 return latest_release_list['body']
-    return "Changelog non disponible"
+    return "Changelog not available"
 
 
 def send_to_ntfy(releases, auth, url):
     for release in releases:
-        app_name = release['repo'].split('/')[-1]  # Obtenir le nom de l'application à partir du repo
-        version_number = release['tag_name']  # Obtenir le numéro de version
-        app_url = release['html_url']  # Obtenir l'URL de l'application
-        changelog = release['changelog']  # Obtenir le changelog
+        app_name = release['repo'].split('/')[-1]  # Getting the application name from the repo
+        version_number = release['tag_name']  # Getting the version number
+        app_url = release['html_url']  # Getting the application URL
+        changelog = release['changelog']  # Getting the changelog
 
-        # Vérifier si la version a changé depuis la dernière fois
+        # Checking if the version has changed since the last time
         cursor.execute("SELECT version FROM versions WHERE repo=?", (app_name,))
         previous_version = cursor.fetchone()
         if previous_version and previous_version[0] == version_number:
-            logger.info(f"La version de {app_name} n'a pas changé. Pas de notification envoyée.")
-            continue  # Passer à l'application suivante
+            logger.info(f"The version of {app_name} has not changed. No notification sent.")
+            continue  # Move on to the next application
 
-        message = f"Nouvelle version: {version_number}\nPour: {app_name}\nChangelog:\n{changelog}\n{app_url}"
-        # Mettre à jour la version précédente pour cette application
+        message = f"New version: {version_number}\nFor: {app_name}\nChangelog:\n{changelog}\n{app_url}"
+        # Updating the previous version for this application
         cursor.execute("INSERT OR REPLACE INTO versions (repo, version, changelog) VALUES (?, ?, ?)",
                        (app_name, version_number, changelog))
         conn.commit()
@@ -106,10 +106,10 @@ def send_to_ntfy(releases, auth, url):
             "Actions": f"view, Update {app_name}, {app_url}, clear=true"}
         response = requests.post(f"{url}", headers=headers, data=message)
         if response.status_code == 200:
-            logger.info(f"Message envoyé à Ntfy pour {app_name}")
+            logger.info(f"Message sent to Ntfy for {app_name}")
             continue
         else:
-            logger.error(f"Échec de l'envoi du message à Ntfy. Code d'état : {response.status_code}")
+            logger.error(f"Failed to send message to Ntfy. Status code: {response.status_code}")
 
 
 if __name__ == "__main__":
@@ -125,9 +125,10 @@ if __name__ == "__main__":
             latest_release = get_latest_releases(watched_repos_list)
             if latest_release:
                 send_to_ntfy(latest_release, auth, ntfy_url)
-            time.sleep(timeout)  # Attendre une heure avant de vérifier à nouveau
+            time.sleep(timeout)  # Wait an hour before checking again
     else:
         logger.error("Usage: python ntfy.py")
         logger.error(
             "auth: can be generataed by the folowing command: echo -n 'username:password' | base64 and need to be stored in a file named auth.txt")
         logger.error("NTFY_URL: the url of the ntfy server need to be stored in an environment variable named NTFY_URL")
+
