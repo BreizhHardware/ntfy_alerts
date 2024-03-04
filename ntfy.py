@@ -2,8 +2,8 @@ import requests
 import time
 import os
 import logging
-import json
 import sqlite3
+import subprocess
 
 # Configurer le logger
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(name)s - %(levelname)s - %(message)s')
@@ -14,16 +14,9 @@ github_headers = {}
 if github_token:
     github_headers['Authorization'] = f"token {github_token}"
 
-repo_list_env = os.environ.get('GHREPO')
-watched_repos_list = json.loads(repo_list_env) if repo_list_env else []
-
-if not watched_repos_list:
-    logger.error("Aucun dépôt n'a été spécifié. Veuillez spécifier les dépôts à surveiller dans l'environnement GHREPO")
-    exit(1)
 
 # Connexion à la base de données pour stocker les versions précédentes
-db_path = '/github-ntfy/ghntfy_versions.db'
-conn = sqlite3.connect(db_path)
+conn = sqlite3.connect('/github-ntfy/ghntfy_versions.db', check_same_thread=False)
 cursor = conn.cursor()
 
 # Création de la table si elle n'existe pas
@@ -32,6 +25,26 @@ cursor.execute('''CREATE TABLE IF NOT EXISTS versions
 conn.commit()
 
 logger.info("Démarrage de la surveillance des versions...")
+
+conn2 = sqlite3.connect('/github-ntfy/watched_repos.db', check_same_thread=False)
+cursor2 = conn2.cursor()
+
+cursor2.execute('''CREATE TABLE IF NOT EXISTS watched_repos
+                    (id INTEGER PRIMARY KEY, repo TEXT)''')
+conn2.commit()
+
+
+def get_watched_repos():
+    cursor2.execute("SELECT * FROM watched_repos")
+    watched_repos = cursor2.fetchall()
+    watched_repos = []
+    for repo in watched_repos:
+        watched_repos.append(repo[1])
+    return watched_repos
+
+
+def start_api():
+    subprocess.Popen(["python", "ntfy_api.py"])
 
 
 def get_latest_releases(watched_repos):
@@ -101,6 +114,7 @@ def send_to_ntfy(releases, auth, url):
 
 
 if __name__ == "__main__":
+    start_api()
     with open('/auth.txt', 'r') as f:
         auth = f.read().strip()
     ntfy_url = os.environ.get('NTFY_URL')
@@ -108,11 +122,13 @@ if __name__ == "__main__":
 
     if auth and ntfy_url:
         while True:
+            watched_repos_list = get_watched_repos()
             latest_release = get_latest_releases(watched_repos_list)
             if latest_release:
                 send_to_ntfy(latest_release, auth, ntfy_url)
             time.sleep(timeout)  # Attendre une heure avant de vérifier à nouveau
     else:
         logger.error("Usage: python ntfy.py")
-        logger.error("auth: can be generataed by the folowing command: echo -n 'username:password' | base64 and need to be stored in a file named auth.txt")
+        logger.error(
+            "auth: can be generataed by the folowing command: echo -n 'username:password' | base64 and need to be stored in a file named auth.txt")
         logger.error("NTFY_URL: the url of the ntfy server need to be stored in an environment variable named NTFY_URL")
