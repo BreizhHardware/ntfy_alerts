@@ -29,10 +29,11 @@ services:
       - PASSWORD=password # Required
       - NTFY_URL=ntfy_url # Required
       - GHNTFY_TIMEOUT=timeout # Default is 3600 (1 hour)
-      - GHREPO=["username/repo1", "username/repo2"] # Default is empty
       - GHNTFY_TOKEN= # Default is empty (Github token)
     volumes:
       - /path/to/github-ntfy:/github-ntfy/
+    ports:
+      - 80:80
     restart: unless-stopped
 ````
 GHNTFY_TOKEN, need to have repo, read:org and read:user
@@ -42,7 +43,7 @@ Docker Hub repo: https://hub.docker.com/r/breizhhardware/github-ntfy
 - [x] Dockerize the ntfy.py
 - [x] Add the watched repos list as a parameter
 - [x] Add the application version as a database
-- [ ] Add the watched repos list as a web interface
+- [x] Add the watched repos list as a web interface
 # Bash setup-notify.sh
 ## Description:
 This script is used to setup the ntfy notification system on ssh login for a new server.
