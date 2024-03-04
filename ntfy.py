@@ -14,7 +14,6 @@ github_headers = {}
 if github_token:
     github_headers['Authorization'] = f"token {github_token}"
 
-
 # Connexion à la base de données pour stocker les versions précédentes
 conn = sqlite3.connect('/github-ntfy/ghntfy_versions.db', check_same_thread=False)
 cursor = conn.cursor()
@@ -36,9 +35,9 @@ conn2.commit()
 
 def get_watched_repos():
     cursor2.execute("SELECT * FROM watched_repos")
-    watched_repos = cursor2.fetchall()
+    watched_repos_rows = cursor2.fetchall()
     watched_repos = []
-    for repo in watched_repos:
+    for repo in watched_repos_rows:
         watched_repos.append(repo[1])
     return watched_repos
 
@@ -73,9 +72,9 @@ def get_changelog(repo):
     if response.status_code == 200:
         releases = response.json()
         if releases:
-            latest_release = releases[0]
-            if 'body' in latest_release:
-                return latest_release['body']
+            latest_release_list = releases[0]
+            if 'body' in latest_release_list:
+                return latest_release_list['body']
     return "Changelog non disponible"
 
 
