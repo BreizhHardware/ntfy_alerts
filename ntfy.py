@@ -84,6 +84,8 @@ def send_to_ntfy(releases, auth, url):
         version_number = release['tag_name']  # Getting the version number
         app_url = release['html_url']  # Getting the application URL
         changelog = release['changelog']  # Getting the changelog
+        release_date = release['published_at'] # Getting the release date
+        release_date = release_date.replace("T", " ").replace("Z", "") # Formatting the release date
 
         # Checking if the version has changed since the last time
         cursor.execute("SELECT version FROM versions WHERE repo=?", (app_name,))
@@ -92,7 +94,7 @@ def send_to_ntfy(releases, auth, url):
             logger.info(f"The version of {app_name} has not changed. No notification sent.")
             continue  # Move on to the next application
 
-        message = f"New version: {version_number}\nFor: {app_name}\nChangelog:\n{changelog}\n{app_url}"
+        message = f"New version: {version_number}\nFor: {app_name}\nPublished on: {release_date}\nChangelog:\n{changelog}\n{app_url}"
         # Updating the previous version for this application
         cursor.execute("INSERT OR REPLACE INTO versions (repo, version, changelog) VALUES (?, ?, ?)",
                        (app_name, version_number, changelog))
