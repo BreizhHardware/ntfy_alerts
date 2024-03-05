@@ -54,12 +54,14 @@ def get_latest_releases(watched_repos):
         if response.status_code == 200:
             release_info = response.json()
             changelog = get_changelog(repo)
+            release_date = release_info.get('published_at', 'Release date not available')
             releases.append({
                 "repo": repo,
                 "name": release_info["name"],
                 "tag_name": release_info["tag_name"],
                 "html_url": release_info["html_url"],
-                "changelog": changelog
+                "changelog": changelog,
+                "published_at": release_date
             })
         else:
             logger.error(f"Failed to fetch release info for {repo}")
