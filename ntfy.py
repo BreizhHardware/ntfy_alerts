@@ -133,6 +133,7 @@ if __name__ == "__main__":
     else:
         logger.error("Usage: python ntfy.py")
         logger.error(
-            "auth: can be generataed by the folowing command: echo -n 'username:password' | base64 and need to be stored in a file named auth.txt")
+            "auth: can be generataed by the folowing command: echo -n 'username:password' | base64 and need to be "
+            "stored in a file named auth.txt")
         logger.error("NTFY_URL: the url of the ntfy server need to be stored in an environment variable named NTFY_URL")
 

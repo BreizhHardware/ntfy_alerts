@@ -6,7 +6,6 @@ app = Flask(__name__)
 CORS(app)
 app.logger.setLevel("WARNING")
 
-
 def get_db_connection():
     conn = sqlite3.connect('/github-ntfy/watched_repos.db')
     conn.row_factory = sqlite3.Row
@@ -55,6 +54,35 @@ def get_watched_repos():
     cursor.close()
     db.close()
     return jsonify(watched_repos)
+
+
+@app.route('/delete_repo', methods=['POST'])
+def delete_repo():
+    data = request.json
+    repo = data.get('repo')
+
+    # Vérifier si le champ 'repo' est présent dans les données JSON
+    if not repo:
+        return jsonify({"error": "The repo field is required."}), 400
+
+    # Établir une connexion à la base de données
+    conn = get_db_connection()
+    cursor = conn.cursor()
+
+    try:
+        # Vérifier si le dépôt existe dans la base de données
+        cursor.execute("SELECT * FROM watched_repos WHERE repo=?", (repo,))
+        existing_repo = cursor.fetchone()
+        if not existing_repo:
+            return jsonify({"error": f"The repo {repo} is not in the database."}), 404
+
+        # Supprimer le dépôt de la base de données
+        cursor.execute("DELETE FROM watched_repos WHERE repo=?", (repo,))
+        conn.commit()
+        return jsonify({"message": f"The repo {repo} as been deleted from the watched repos."})
+    finally:
+        # Fermer la connexion à la base de données
+        close_db_connection(conn)
 
 
 if __name__ == "__main__":

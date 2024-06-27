@@ -32,9 +32,45 @@ function refreshWatchedRepos() {
             // Ajouter chaque dépôt surveillé à la liste
             data.forEach(repo => {
                 const listItem = document.createElement('li');
-                listItem.textContent = repo;
+                const repoName = document.createElement('span');
+                repoName.textContent = repo;
+                repoName.className = 'repo-name';
+                listItem.appendChild(repoName);
+
+                const deleteButton = document.createElement('button');
+                deleteButton.textContent = ' X';
+                deleteButton.className = 'delete-btn text-red-500 ml-2';
+                deleteButton.addEventListener('click', () => {
+                    // Remove the repo from the watched repos
+                    // This is a placeholder. Replace it with your actual code to remove the repo from the watched repos.
+                    removeRepoFromWatchedRepos(repo);
+
+                    // Remove the repo from the DOM
+                    listItem.remove();
+                });
+                listItem.appendChild(deleteButton);
+
                 watchedReposList.appendChild(listItem);
             });
+        })
+        .catch(error => {
+            console.error('Error:', error);
+        });
+}
+
+function removeRepoFromWatchedRepos(repo) {
+    fetch('/delete_repo', {
+        method: 'POST',
+        headers: {
+            'Access-Control-Allow-Origin': '*',
+            'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({repo: repo})
+    })
+        .then(response => {
+            if (!response.ok) {
+                throw new Error('Erreur lors de la suppression du dépôt');
+            }
         })
         .catch(error => {
             console.error('Error:', error);
