@@ -86,7 +86,7 @@ def get_watched_repos():
 
 
 @app.route('/watched_docker_repos', methods=['GET'])
-def get_watched_repos():
+def get_watched_docker_repos():
     db = get_db_connection()
     cursor = db.cursor()
     cursor.execute("SELECT repo FROM docker_watched_repos")
@@ -126,7 +126,7 @@ def delete_repo():
 
 
 @app.route('/delete_docker_repo', methods=['POST'])
-def delete_repo():
+def delete_docker_repo():
     data = request.json
     repo = data.get('repo')
 

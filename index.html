@@ -9,8 +9,8 @@
 </head>
 <body class="bg-gradient-to-b from-stone-500 to-green-700">
     <h1 class="text-4xl font-semibold leading-10 text-gray-900 text-center">Github-Ntfy</h1>
-    <div class="flex flex-row gap-2 justify-center items-center my-2 h-screen border-double border-2 border-white">
-        <div class="flex flex-col gap-2 justify-center items-center my-2 h-screen" id="github">
+    <div class="flex flex-row gap-2 justify-center items-center my-2 h-screen">
+        <div class="flex flex-col gap-2 justify-center items-center my-2 h-screen border-double border-2 border-white p-2" id="github">
             <h1>Add a github repo</h1>
             <form id="addRepoForm">
                 <div class="space-y-12">
@@ -34,23 +34,23 @@
                 </div>
             </form>
             <div class="mt-8">
-                <h2 class="text-base font-semibold leading-7 text-gray-900">Watched Repositories</h2>
+                <h2 class="text-base font-semibold leading-7 text-gray-900">Watched Github Repositories</h2>
                 <ul id="watchedReposList" class="mt-4">
                     <!-- Dynamically populated with JavaScript -->
                 </ul>
             </div>
         </div>
-        <div class="flex flex-col gap-2 justify-center items-center my-2 h-screen" id="docker">
-            <h1>Add a github repo</h1>
+        <div class="flex flex-col gap-2 justify-center items-center my-2 h-screen border-double border-2 border-white p-2" id="docker">
+            <h1>Add a docker repo</h1>
             <form id="addDockerRepoForm">
                 <div class="space-y-12">
                     <div class="border-b border-gray-900/10 pb-12">
-                        <h2 class="text-base font-semibold leading-7 text-gray-900">Name of the github repo</h2>
+                        <h2 class="text-base font-semibold leading-7 text-gray-900">Name of the docker repo</h2>
                         <div class="mt-10 grid grid-cols-1 gap-x-6 gap-y-8 sm:grid-cols-6">
                             <div class="sm:col-span-4">
                                 <div class="mt-2">
                                     <div class="flex rounded-md shadow-sm ring-1 ring-inset ring-gray-300 focus-within:ring-2 focus-within:ring-inset focus-within:ring-indigo-600 sm:max-w-md">
-                                        <span class="flex select-none items-center pl-3 sm:text-sm">github.com/</span>
+                                        <span class="flex select-none items-center pl-3 sm:text-sm">hub.docker.com/r/</span>
                                         <input type="text" name="dockerRepo" id="dockerRepo" autocomplete="dockerRepo" class="block flex-1 border-0 bg-transparent py-1.5 pl-1 placeholder:text-gray-600 focus:ring-0 sm:text-sm sm:leading-6" placeholder="breizhhardware/github-ntfy">
                                     </div>
                                 </div>
@@ -64,7 +64,7 @@
                 </div>
             </form>
             <div class="mt-8">
-                <h2 class="text-base font-semibold leading-7 text-gray-900">Watched Repositories</h2>
+                <h2 class="text-base font-semibold leading-7 text-gray-900">Watched Docker Repositories</h2>
                 <ul id="watchedDockerReposList" class="mt-4">
                     <!-- Dynamically populated with JavaScript -->
                 </ul>
