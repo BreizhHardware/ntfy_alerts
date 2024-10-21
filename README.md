@@ -21,7 +21,6 @@ python ntfy.py
 ## Docker:
 If you want to use the docker image you can use the following docker-compose file:
 ````yaml
-version: '3'
 services:
   github-ntfy:
     image: breizhhardware/github-ntfy:latest
