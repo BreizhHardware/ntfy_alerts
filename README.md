@@ -6,6 +6,7 @@ Feel free to contribute and to fork !
 # Python ntfy.py
 ## Description:
 This script is used to watch the github repos and send a notification to the ntfy server when a new release is published.
+
 It can aloso watch Docker Hub repos and do the same as github.
 ## Utilisation:
 auth and ntfy_url are required to be set as environment variables.
