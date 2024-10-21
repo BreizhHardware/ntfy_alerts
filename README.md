@@ -1,11 +1,12 @@
 # ntfy_alerts
 Personal ntfy alerts system
 
-feel free to contribute and to fork
+Feel free to contribute and to fork !
 
 # Python ntfy.py
 ## Description:
 This script is used to watch the github repos and send a notification to the ntfy server when a new release is published.
+It can aloso watch Docker Hub repos and do the same as github.
 ## Utilisation:
 auth and ntfy_url are required to be set as environment variables.
 
@@ -44,6 +45,8 @@ Docker Hub repo: https://hub.docker.com/r/breizhhardware/github-ntfy
 - [x] Add the watched repos list as a parameter
 - [x] Add the application version as a database
 - [x] Add the watched repos list as a web interface
+- [x] Add Docker Hub compatibility
+- [ ] Rework of the web interface
 # Bash setup-notify.sh
 ## Description:
 This script is used to setup the ntfy notification system on ssh login for a new server.

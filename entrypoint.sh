@@ -7,4 +7,5 @@ echo -n "$USERNAME:$PASSWORD" | base64 > /auth.txt
 nginx -g 'daemon off;' &
 
 # Exécute le script Python
+exec python ./migration.py
 exec python ./ntfy.py
