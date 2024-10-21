@@ -1,6 +1,7 @@
 FROM python:3.11.8-alpine3.19
 
 LABEL maintainer="BreizhHardware"
+LABEL version_number="1.4"
 
 ADD ntfy.py /
 ADD ntfy_api.py /
