@@ -400,3 +400,9 @@ _deps
 .nfs*
 
 # End of https://www.toptal.com/developers/gitignore/api/c++,linux,clion,cmake,clion+all
+
+docker-compose.yml
+github-ntfy/
+github-ntfy/*
+
+*.db
