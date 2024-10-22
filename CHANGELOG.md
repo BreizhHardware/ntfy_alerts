@@ -6,4 +6,4 @@
 **Breaking changes**:
 - Change in the docker-compose file, you need to add the DOCKER_USERNAME and DOCKER_PASSWORD environment variables
 
-**Full Changelog**: https://github.com/BreizhHardware/ntfy_alerts/compare/v1.3...v1.4
+**Full Changelog**: https://github.com/BreizhHardware/ntfy_alerts/compare/v1.3...v1.4.3

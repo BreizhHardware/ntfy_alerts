@@ -45,12 +45,16 @@ jobs:
         run: |
           latest_tag=${{ env.latest_tag }}
           if [ -z "$latest_tag" ]; then
-            new_version="v1.4.2"
+            new_version="v1.4.3"
           else
             IFS='.' read -r -a version_parts <<< "${latest_tag#v}"
             new_version="v${version_parts[0]}.$((version_parts[1] + 1)).0"
           fi
           echo "new_version=$new_version" >> $GITHUB_ENV
+
+      - name: Read changelog
+        id: read_changelog
+        run: echo "changelog=$(cat CHANGELOG.md)" >> $GITHUB_ENV
 
       - name: Create Release
         id: create_release
@@ -60,18 +64,6 @@ jobs:
         with:
           tag_name: ${{ env.new_version }}
           release_name: Release ${{ env.new_version }}
+          body: ${{ env.changelog }}
           draft: false
           prerelease: false
-
-      - name: List files for debugging
-        run: ls -la
-
-      - name: Upload changelog
-        uses: actions/upload-release-asset@v1
-        env:
-          GITHUB_TOKEN: ${{ secrets.TOKEN }}
-        with:
-          upload_url: ${{ steps.create_release.outputs.upload_url }}
-          asset_path: ./CHANGELOG.MD
-          asset_name: CHANGELOG.MD
-          asset_content_type: text/markdown
