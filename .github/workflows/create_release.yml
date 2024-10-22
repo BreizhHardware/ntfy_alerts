@@ -45,7 +45,7 @@ jobs:
         run: |
           latest_tag=${{ env.latest_tag }}
           if [ -z "$latest_tag" ]; then
-            new_version="v1.4.2"
+            new_version="v1.4.3"
           else
             IFS='.' read -r -a version_parts <<< "${latest_tag#v}"
             new_version="v${version_parts[0]}.$((version_parts[1] + 1)).0"
@@ -56,6 +56,10 @@ jobs:
         id: read_changelog
         run: echo "changelog=$(base64 -w 0 CHANGELOG.md)" >> $GITHUB_ENV
 
+      - name: Decode changelog
+        id: decode_changelog
+        run: echo "${{ env.changelog }}" | base64 -d > decoded_changelog.txt
+
       - name: Create Release
         id: create_release
         uses: actions/create-release@v1
@@ -64,6 +68,6 @@ jobs:
         with:
           tag_name: ${{ env.new_version }}
           release_name: Release ${{ env.new_version }}
-          body: ${{ steps.read_changelog.outputs.changelog | base64 -d }}
+          body: ${{ steps.decode_changelog.outputs.changelog }}
           draft: false
           prerelease: false
