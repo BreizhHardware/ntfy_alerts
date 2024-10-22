@@ -72,6 +72,6 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.TOKEN }}
         with:
           upload_url: ${{ steps.create_release.outputs.upload_url }}
-          asset_path: ./CHANGELOG.md
-          asset_name: CHANGELOG.md
+          asset_path: ./CHANGELOG.MD
+          asset_name: CHANGELOG.MD
           asset_content_type: text/markdown
