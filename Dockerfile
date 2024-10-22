@@ -19,6 +19,8 @@ ENV USERNAME="" \
     NTFY_URL="" \
     GHNTFY_TIMEOUT="3600" \
     GHNTFY_TOKEN="" \
+    DOCKER_USERNAME="" \
+    DOCKER_PASSWORD="" \
     FLASK_ENV=production
 
 # Exposer le port 5000 pour l'API et le port 80 pour le serveur web

@@ -14,6 +14,32 @@ github_headers = {}
 if github_token:
     github_headers['Authorization'] = f"token {github_token}"
 
+docker_username = os.environ.get('DOCKER_USERNAME')
+docker_password = os.environ.get('DOCKER_PASSWORD')
+
+
+def create_dockerhub_token(username, password):
+    url = "https://hub.docker.com//v2/users/login"
+    headers = {"Content-Type": "application/json"}
+    data = json.dumps({"username": username, "password": password})
+
+    response = requests.post(url, headers=headers, data=data)
+
+    if response.status_code == 200:
+        token = response.json().get("token")
+        if token:
+            return token
+        else:
+            logger.error("Failed to get Docker Hub token.")
+    else:
+        logger.error(f"Failed to get Docker Hub token. Status code: {response.status_code}")
+    return None
+
+
+docker_token = create_dockerhub_token(docker_username, docker_password)
+docker_header = {}
+if docker_token:
+    docker_header['Authorization'] = f"Bearer {docker_token}"
 # Connecting to the database to store previous versions
 conn = sqlite3.connect('/github-ntfy/ghntfy_versions.db', check_same_thread=False)
 cursor = conn.cursor()
@@ -88,7 +114,7 @@ def get_latest_docker_releases(watched_repos):
     releases = []
     for repo in watched_repos:
         url = f"https://hub.docker.com/v2/repositories/{repo_name}/tags/latest"
-        response = requests.get(url)
+        response = requests.get(url, headers=docker_header)
         if response.status_code == 200:
             release_info = response.json()
             release_date=release_info["last_upated"]

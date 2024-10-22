@@ -31,6 +31,8 @@ services:
       - NTFY_URL=ntfy_url # Required
       - GHNTFY_TIMEOUT=timeout # Default is 3600 (1 hour)
       - GHNTFY_TOKEN= # Default is empty (Github token)
+      - DOCKER_USERNAME= # Default is empty (Docker Hub username)
+      - DOCKER_PASSWORD= # Default is empty (Docker Hub password)
     volumes:
       - /path/to/github-ntfy:/github-ntfy/
     ports:
