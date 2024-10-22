@@ -45,7 +45,7 @@ jobs:
         run: |
           latest_tag=${{ env.latest_tag }}
           if [ -z "$latest_tag" ]; then
-            new_version="v1.4.0"
+            new_version="v1.4.1"
           else
             IFS='.' read -r -a version_parts <<< "${latest_tag#v}"
             new_version="v${version_parts[0]}.$((version_parts[1] + 1)).0"
@@ -62,6 +62,9 @@ jobs:
           release_name: Release ${{ env.new_version }}
           draft: false
           prerelease: false
+
+      - name: List files for debugging
+        run: ls -la
 
       - name: Upload changelog
         uses: actions/upload-release-asset@v1
