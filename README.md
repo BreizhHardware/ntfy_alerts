@@ -51,6 +51,7 @@ Docker Hub repo: https://hub.docker.com/r/breizhhardware/github-ntfy
 - [ ] Rework of the web interface
 - [ ] Compatibility with Gotify
 - [ ] Compatibility with Discord Webhook
+- [ ] Compatibility and distribution for arm64 and armv7
 # Bash setup-notify.sh
 ## Description:
 This script is used to setup the ntfy notification system on ssh login for a new server.
