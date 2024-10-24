@@ -21,6 +21,8 @@ ENV USERNAME="" \
     GHNTFY_TOKEN="" \
     DOCKER_USERNAME="" \
     DOCKER_PASSWORD="" \
+    GOTIFY_URL="" \
+    GOTIFY_TOKEN="" \
     FLASK_ENV=production
 
 # Exposer le port 5000 pour l'API et le port 80 pour le serveur web

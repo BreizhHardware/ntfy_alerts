@@ -28,11 +28,13 @@ services:
     environment:
       - USERNAME=username # Required
       - PASSWORD=password # Required
-      - NTFY_URL=ntfy_url # Required
+      - NTFY_URL=ntfy_url # Required if ntfy is used
       - GHNTFY_TIMEOUT=timeout # Default is 3600 (1 hour)
       - GHNTFY_TOKEN= # Default is empty (Github token)
       - DOCKER_USERNAME= # Default is empty (Docker Hub username)
       - DOCKER_PASSWORD= # Default is empty (Docker Hub password)
+      - GOTIFY_URL=gotify_url # Required if gotify is used
+      - GOTIFY_TOKEN= # Required if gotify is used
     volumes:
       - /path/to/github-ntfy:/github-ntfy/
     ports:
@@ -49,7 +51,7 @@ Docker Hub repo: https://hub.docker.com/r/breizhhardware/github-ntfy
 - [x] Add the watched repos list as a web interface
 - [x] Add Docker Hub compatibility
 - [ ] Rework of the web interface
-- [ ] Compatibility with Gotify
+- [x] Compatibility with Gotify
 - [ ] Compatibility with Discord Webhook
 - [ ] Compatibility and distribution for arm64 and armv7
 # Bash setup-notify.sh
