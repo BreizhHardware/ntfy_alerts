@@ -1,24 +1,18 @@
-# ntfy_alerts
-Personal ntfy alerts system
+<h1 align="center">Welcome to ntfy_alerts 👋</h1>
+<p>
+  <img alt="Version" src="https://img.shields.io/badge/version-1.5-blue.svg?cacheSeconds=2592000" />
+  <a href="#" target="_blank">
+    <img alt="License: GPL--3" src="https://img.shields.io/badge/License-GPL--3-yellow.svg" />
+  </a>
+  <a href="https://twitter.com/BreizhHardware" target="_blank">
+    <img alt="Twitter: BreizhHardware" src="https://img.shields.io/twitter/follow/BreizhHardware.svg?style=social" />
+  </a>
+</p>
 
-Feel free to contribute and to fork !
+> This project allow you to have notification about new github or docker hub release on ntfy, gotify and (soon) discord.
 
-# Python ntfy.py
-## Description:
-This script is used to watch the github repos and send a notification to the ntfy server when a new release is published.
+## Usage
 
-It can aloso watch Docker Hub repos and do the same as github.
-## Utilisation:
-auth and ntfy_url are required to be set as environment variables.
-
-auth: can be generataed by the folowing command: echo -n 'username:password' | base64
-
-ntfy_url: the url of the ntfy server including the topic
-
-````python
-python ntfy.py
-````
-## Docker:
 If you want to use the docker image you can use the following docker-compose file for x86_64:
 ````yaml
 services:
@@ -85,9 +79,21 @@ services:
       - 80:80
     restart: unless-stopped
 ````
-GHNTFY_TOKEN, need to have repo, read:org and read:user
+GHNTFY_TOKEN is a github token, it need to have repo, read:org and read:user
 
-Docker Hub repo: https://hub.docker.com/r/breizhhardware/github-ntfy
+## Author
+
+👤 **BreizhHardware**
+
+* Website: https://mrqt.fr?ref=github
+* Twitter: [@BreizhHardware](https://twitter.com/BreizhHardware)
+* Github: [@BreizhHardware](https://github.com/BreizhHardware)
+* LinkedIn: [@félix-marquet-5071bb167](https://linkedin.com/in/félix-marquet-5071bb167)
+
+## Contribution
+
+If you want to contribut, feel free to open a pull request (CONTRIBUTION.md comming soon)!
+
 ## TODO:
 - [x] Dockerize the ntfy.py
 - [x] Add the watched repos list as a parameter
@@ -98,34 +104,7 @@ Docker Hub repo: https://hub.docker.com/r/breizhhardware/github-ntfy
 - [x] Compatibility with Gotify
 - [ ] Compatibility with Discord Webhook
 - [x] Compatibility and distribution for arm64 and armv7
-# Bash setup-notify.sh
-## Description:
-This script is used to setup the ntfy notification system on ssh login for a new server.
-## Utilisation:
-````bash
-bash setup-notify.sh <ntfy_url> <username> <password> <topic>
-````
-ntfy_url: the url of the ntfy server
 
-username: the username of the user
+## Show your support
 
-password: the password of the user
-
-topic: the topic of the notification
-
-This script will create a send-notify.sh in the root of your disk and add the login-notify.sh to the /etc/profile.d/ folder.
-# Bash send-notify.sh
-## Description:
-This script is used to send a notification to the ntfy server.
-## Utilisation:
-````bash
-bash send-notify.sh <ntfy_url> <basic_auth> <topic> <message>
-````
-ntfy_url: the url of the ntfy server
-
-basic_auth: the basic auth of the user
-
-topic: the topic of the notification
-
-message: the message of the notification
-
+Give a ⭐️ if this project helped you!
