@@ -205,3 +205,10 @@ if __name__ == "__main__":
             "stored in a file named auth.txt"
         )
         logger.error("NTFY_URL: the url of the ntfy server need to be stored in an environment variable named NTFY_URL")
+        logger.error(
+            "GOTIFY_URL: the url of the gotify server need to be stored in an environment variable named GOTIFY_URL"
+        )
+        logger.error(
+            "GOTIFY_TOKEN: the token of the gotify server need to be stored in an environment variable named GOTIFY_TOKEN"
+        )
+        logger.error("GHNTFY_TIMEOUT: the time interval between each check")
