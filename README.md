@@ -19,7 +19,7 @@ ntfy_url: the url of the ntfy server including the topic
 python ntfy.py
 ````
 ## Docker:
-If you want to use the docker image you can use the following docker-compose file:
+If you want to use the docker image you can use the following docker-compose file for x86_64:
 ````yaml
 services:
   github-ntfy:
@@ -28,11 +28,57 @@ services:
     environment:
       - USERNAME=username # Required
       - PASSWORD=password # Required
-      - NTFY_URL=ntfy_url # Required
+      - NTFY_URL=ntfy_url # Required if ntfy is used
       - GHNTFY_TIMEOUT=timeout # Default is 3600 (1 hour)
       - GHNTFY_TOKEN= # Default is empty (Github token)
       - DOCKER_USERNAME= # Default is empty (Docker Hub username)
       - DOCKER_PASSWORD= # Default is empty (Docker Hub password)
+      - GOTIFY_URL=gotify_url # Required if gotify is used
+      - GOTIFY_TOKEN= # Required if gotify is used
+    volumes:
+      - /path/to/github-ntfy:/github-ntfy/
+    ports:
+      - 80:80
+    restart: unless-stopped
+````
+For arm64 this docker compose file is ok:
+````yaml
+services:
+  github-ntfy:
+    image: breizhhardware/github-ntfy:arm64
+    container_name: github-ntfy
+    environment:
+      - USERNAME=username # Required
+      - PASSWORD=password # Required
+      - NTFY_URL=ntfy_url # Required if ntfy is used
+      - GHNTFY_TIMEOUT=timeout # Default is 3600 (1 hour)
+      - GHNTFY_TOKEN= # Default is empty (Github token)
+      - DOCKER_USERNAME= # Default is empty (Docker Hub username)
+      - DOCKER_PASSWORD= # Default is empty (Docker Hub password)
+      - GOTIFY_URL=gotify_url # Required if gotify is used
+      - GOTIFY_TOKEN= # Required if gotify is used
+    volumes:
+      - /path/to/github-ntfy:/github-ntfy/
+    ports:
+      - 80:80
+    restart: unless-stopped
+````
+For armV7 this docker compose is ok:
+````yaml
+services:
+  github-ntfy:
+    image: breizhhardware/github-ntfy:armv7
+    container_name: github-ntfy
+    environment:
+      - USERNAME=username # Required
+      - PASSWORD=password # Required
+      - NTFY_URL=ntfy_url # Required if ntfy is used
+      - GHNTFY_TIMEOUT=timeout # Default is 3600 (1 hour)
+      - GHNTFY_TOKEN= # Default is empty (Github token)
+      - DOCKER_USERNAME= # Default is empty (Docker Hub username)
+      - DOCKER_PASSWORD= # Default is empty (Docker Hub password)
+      - GOTIFY_URL=gotify_url # Required if gotify is used
+      - GOTIFY_TOKEN= # Required if gotify is used
     volumes:
       - /path/to/github-ntfy:/github-ntfy/
     ports:
@@ -49,9 +95,9 @@ Docker Hub repo: https://hub.docker.com/r/breizhhardware/github-ntfy
 - [x] Add the watched repos list as a web interface
 - [x] Add Docker Hub compatibility
 - [ ] Rework of the web interface
-- [ ] Compatibility with Gotify
+- [x] Compatibility with Gotify
 - [ ] Compatibility with Discord Webhook
-- [ ] Compatibility and distribution for arm64 and armv7
+- [x] Compatibility and distribution for arm64 and armv7
 # Bash setup-notify.sh
 ## Description:
 This script is used to setup the ntfy notification system on ssh login for a new server.
