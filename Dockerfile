@@ -7,6 +7,8 @@ ADD ntfy.py /
 ADD ntfy_api.py /
 ADD requirements.txt /
 ADD entrypoint.sh /
+ADD send_ntfy.py /
+ADD send_gotify.py /
 ADD index.html /var/www/html/index.html
 ADD script.js /var/www/html/script.js
 RUN apk add --no-cache sqlite-dev sqlite-libs gcc musl-dev nginx
