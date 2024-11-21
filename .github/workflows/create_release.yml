@@ -45,7 +45,7 @@ jobs:
         run: |
           latest_tag=${{ env.latest_tag }}
           if [ -z "$latest_tag" ]; then
-            new_version="v1.5.1"
+            new_version="v1.5.2"
           else
             IFS='.' read -r -a version_parts <<< "${latest_tag#v}"
             new_version="v${version_parts[0]}.$((version_parts[1] + 1)).0"
