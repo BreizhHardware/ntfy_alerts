@@ -57,7 +57,7 @@ def github_send_to_gotify(releases, token, url):
             logger.error(f"Failed to send message to Gotify. Status code: {response.status_code}")
 
 
-def docker_send_to_ntfy(releases, token, url):
+def docker_send_to_gotify(releases, token, url):
     url = url + "/message"
     url = url + "?token=" + token
     for release in releases:
