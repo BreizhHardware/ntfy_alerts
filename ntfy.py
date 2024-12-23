@@ -5,6 +5,8 @@ import logging
 import sqlite3
 import subprocess
 import json
+import threading
+
 from send_ntfy import (
     github_send_to_ntfy,
     docker_send_to_ntfy,
@@ -175,6 +177,34 @@ def get_changelog(repo):
                 return latest_release_list["body"]
     return "Changelog not available"
 
+def notify_all_services(github_latest_release, docker_latest_release, auth, ntfy_url, gotify_url, gotify_token, discord_webhook_url):
+    threads = []
+
+    if ntfy_url:
+        if github_latest_release:
+            threads.append(threading.Thread(target=github_send_to_ntfy, args=(github_latest_release, auth, ntfy_url)))
+        if docker_latest_release:
+            threads.append(threading.Thread(target=docker_send_to_ntfy, args=(docker_latest_release, auth, ntfy_url)))
+
+    if gotify_url and gotify_token:
+        if github_latest_release:
+            threads.append(threading.Thread(target=github_send_to_gotify, args=(github_latest_release, gotify_token, gotify_url)))
+        if docker_latest_release:
+            threads.append(threading.Thread(target=docker_send_to_gotify, args=(docker_latest_release, gotify_token, gotify_url)))
+
+    if discord_webhook_url:
+        if github_latest_release:
+            threads.append(threading.Thread(target=github_send_to_discord, args=(github_latest_release, discord_webhook_url)))
+        if docker_latest_release:
+            threads.append(threading.Thread(target=docker_send_to_discord, args=(docker_latest_release, discord_webhook_url)))
+
+    for thread in threads:
+        thread.start()
+
+    for thread in threads:
+        thread.join()
+
+
 
 if __name__ == "__main__":
     start_api()
@@ -193,25 +223,9 @@ if __name__ == "__main__":
             docker_watched_repos_list = get_docker_watched_repos()
             docker_latest_release = get_latest_docker_releases(docker_watched_repos_list)
 
-            if ntfy_url:
-                if github_latest_release:
-                    github_send_to_ntfy(github_latest_release, auth, ntfy_url)
-                if docker_latest_release:
-                    docker_send_to_ntfy(docker_latest_release, auth, ntfy_url)
+            notify_all_services(github_latest_release, docker_latest_release, auth, ntfy_url, gotify_url, gotify_token, discord_webhook_url)
 
-            if gotify_url and gotify_token:
-                if github_latest_release:
-                    github_send_to_gotify(github_latest_release, gotify_token, gotify_url)
-                if docker_latest_release:
-                    docker_send_to_gotify(docker_latest_release, gotify_token, gotify_url)
-
-            if discord_webhook_url:
-                if github_latest_release:
-                    github_send_to_discord(github_latest_release, discord_webhook_url)
-                if docker_latest_release:
-                    docker_send_to_discord(docker_latest_release, discord_webhook_url)
-
-            time.sleep(timeout)  # Wait an hour before checking again
+            time.sleep(timeout)
     else:
         logger.error("Usage: python ntfy.py")
         logger.error(

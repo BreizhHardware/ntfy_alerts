@@ -2,20 +2,18 @@ import requests
 import sqlite3
 import logging
 
-conn = sqlite3.connect(
-    "/github-ntfy/ghntfy_versions.db",
-    check_same_thread=False,
-)
-cursor = conn.cursor()
-
 logging.basicConfig(
     level=logging.INFO,
     format="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
 )
 logger = logging.getLogger(__name__)
 
+def get_db_connection():
+    return sqlite3.connect("/github-ntfy/ghntfy_versions.db", check_same_thread=False)
 
 def github_send_to_ntfy(releases, auth, url):
+    conn = get_db_connection()
+    cursor = conn.cursor()
     for release in releases:
         app_name = release["repo"].split("/")[-1]  # Getting the application name from the repo
         version_number = release["tag_name"]  # Getting the version number
@@ -58,6 +56,8 @@ def github_send_to_ntfy(releases, auth, url):
 
 
 def docker_send_to_ntfy(releases, auth, url):
+    conn = get_db_connection()
+    cursor = conn.cursor()
     for release in releases:
         app_name = release["repo"].split("/")[-1]  # Getting the application name from the repo
         digest_number = release["digest"]

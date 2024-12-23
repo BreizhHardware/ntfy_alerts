@@ -2,20 +2,18 @@ import requests
 import sqlite3
 import logging
 
-conn = sqlite3.connect(
-    "/github-ntfy/ghntfy_versions.db",
-    check_same_thread=False,
-)
-cursor = conn.cursor()
-
 logging.basicConfig(
     level=logging.INFO,
     format="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
 )
 logger = logging.getLogger(__name__)
 
+def get_db_connection():
+    return sqlite3.connect("/github-ntfy/ghntfy_versions.db", check_same_thread=False)
 
 def github_send_to_discord(releases, webhook_url):
+    conn = get_db_connection()
+    cursor = conn.cursor()
     for release in releases:
         app_name = release["repo"].split("/")[-1]  # Getting the application name from the repo
         version_number = release["tag_name"]  # Getting the version number
@@ -34,40 +32,31 @@ def github_send_to_discord(releases, webhook_url):
             logger.info(f"The version of {app_name} has not changed. No notification sent.")
             continue  # Move on to the next application
 
-        # Creating the embed message
-        embed = {
-            "title": f"New version for {app_name}",
-            "url": app_url,
-            "color": "#027d21",
-            "fields": [
-                {
-                    "name": "Version",
-                    "value": version_number,
-                    "inline": True
-                },
-                {
-                    "name": "Published on",
-                    "value": release_date,
-                    "inline": True
-                },
-                {
-                    "name": "Changelog",
-                    "value": changelog,
-                    "inline": False
-                }
-            ]
+
+        embeds = {
+                "title": f"New version for {app_name}",
+                "url": app_url,
+                "color": "#027d21",
+                "description": f"New version: {version_number}\nPublished on: {release_date}\nChangelog:\n{changelog}"
         }
 
         data = {
-            "embeds": [embed]
+            "content": "New version available",
+            "username": "GitHub Ntfy",
+            "embeds": [embeds]
         }
-        response = requests.post(webhook_url, json=data)
-        if response.status_code == 204:
+        headers = {
+            "Content-Type": "application/json"
+        }
+        response = requests.post(webhook_url, json = data, headers = headers)
+        if 200 <= response.status_code < 300:
             logger.info(f"Message sent to Discord for {app_name}")
         else:
             logger.error(f"Failed to send message to Discord. Status code: {response.status_code}")
 
 def docker_send_to_discord(releases, webhook_url):
+    conn = get_db_connection()
+    cursor = conn.cursor()
     for release in releases:
         app_name = release["repo"].split("/")[-1]  # Getting the application name from the repo
         digest_number = release["digest"]
