@@ -3,74 +3,67 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Github-Ntfy Add a repo</title>
+    <title>Github-Ntfy Add a Repo</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="./script.js" defer></script>
 </head>
-<body class="bg-gradient-to-b from-stone-500 to-green-700">
-    <h1 class="text-4xl font-semibold leading-10 text-gray-900 text-center">Github-Ntfy</h1>
-    <div class="flex flex-row gap-2 justify-center items-center my-2 h-screen">
-        <div class="flex flex-col gap-2 justify-center items-center my-2 h-screen border-double border-2 border-white p-2" id="github">
-            <h1>Add a github repo</h1>
-            <form id="addRepoForm">
-                <div class="space-y-12">
-                    <div class="border-b border-gray-900/10 pb-12">
-                        <h2 class="text-base font-semibold leading-7 text-gray-900">Name of the github repo</h2>
-                        <div class="mt-10 grid grid-cols-1 gap-x-6 gap-y-8 sm:grid-cols-6">
-                            <div class="sm:col-span-4">
-                                <div class="mt-2">
-                                    <div class="flex rounded-md shadow-sm ring-1 ring-inset ring-gray-300 focus-within:ring-2 focus-within:ring-inset focus-within:ring-indigo-600 sm:max-w-md">
-                                        <span class="flex select-none items-center pl-3 sm:text-sm">github.com/</span>
-                                        <input type="text" name="repo" id="repo" autocomplete="repo" class="block flex-1 border-0 bg-transparent py-1.5 pl-1 placeholder:text-gray-600 focus:ring-0 sm:text-sm sm:leading-6" placeholder="BreizhHardware/ntfy_alerts">
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
+<body class="bg-[#1b2124] text-gray-200">
+<header class="text-center py-8 bg-[#23453d] shadow-lg">
+    <h1 class="text-5xl font-bold tracking-wide text-white">Github-Ntfy</h1>
+</header>
+
+<main class="flex flex-wrap justify-center gap-8 py-12">
+    <!-- Github Repo Section -->
+    <section class="bg-[#23453d] rounded-lg shadow-lg p-6 w-full max-w-lg">
+        <h2 class="text-2xl font-semibold mb-4">Add a Github Repo</h2>
+        <form id="addRepoForm" class="space-y-6">
+            <div>
+                <label for="repo" class="block text-sm font-medium">Name of the Github Repo</label>
+                <div class="mt-2 flex items-center border rounded-md bg-gray-700">
+                    <span class="px-3 text-gray-400">github.com/</span>
+                    <input type="text" name="repo" id="repo" autocomplete="repo" class="flex-1 py-2 px-3 bg-transparent focus:outline-none" placeholder="BreizhHardware/ntfy_alerts">
                 </div>
-                <div class="mt-6 flex items-center justify-end gap-x-6">
-                    <button type="button" class="text-sm font-semibold leading-6 text-gray-900">Cancel</button>
-                    <button type="submit" class="rounded-md bg-indigo-600 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-indigo-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600">Save</button>
-                </div>
-            </form>
-            <div class="mt-8">
-                <h2 class="text-base font-semibold leading-7 text-gray-900">Watched Github Repositories</h2>
-                <ul id="watchedReposList" class="mt-4">
-                    <!-- Dynamically populated with JavaScript -->
-                </ul>
             </div>
-        </div>
-        <div class="flex flex-col gap-2 justify-center items-center my-2 h-screen border-double border-2 border-white p-2" id="docker">
-            <h1>Add a docker repo</h1>
-            <form id="addDockerRepoForm">
-                <div class="space-y-12">
-                    <div class="border-b border-gray-900/10 pb-12">
-                        <h2 class="text-base font-semibold leading-7 text-gray-900">Name of the docker repo</h2>
-                        <div class="mt-10 grid grid-cols-1 gap-x-6 gap-y-8 sm:grid-cols-6">
-                            <div class="sm:col-span-4">
-                                <div class="mt-2">
-                                    <div class="flex rounded-md shadow-sm ring-1 ring-inset ring-gray-300 focus-within:ring-2 focus-within:ring-inset focus-within:ring-indigo-600 sm:max-w-md">
-                                        <span class="flex select-none items-center pl-3 sm:text-sm">hub.docker.com/r/</span>
-                                        <input type="text" name="dockerRepo" id="dockerRepo" autocomplete="dockerRepo" class="block flex-1 border-0 bg-transparent py-1.5 pl-1 placeholder:text-gray-600 focus:ring-0 sm:text-sm sm:leading-6" placeholder="breizhhardware/github-ntfy">
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-                <div class="mt-6 flex items-center justify-end gap-x-6">
-                    <button type="button" class="text-sm font-semibold leading-6 text-gray-900">Cancel</button>
-                    <button type="submit" class="rounded-md bg-indigo-600 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-indigo-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600">Save</button>
-                </div>
-            </form>
-            <div class="mt-8">
-                <h2 class="text-base font-semibold leading-7 text-gray-900">Watched Docker Repositories</h2>
-                <ul id="watchedDockerReposList" class="mt-4">
-                    <!-- Dynamically populated with JavaScript -->
-                </ul>
+            <div class="flex justify-end gap-4">
+                <button type="button" class="px-4 py-2 text-gray-400 hover:text-white">Cancel</button>
+                <button type="submit" class="px-4 py-2 bg-green-700 hover:bg-green-600 text-white font-semibold rounded-md">Save</button>
             </div>
+        </form>
+        <div class="mt-8">
+            <h3 class="text-lg font-semibold mb-2">Watched Github Repositories</h3>
+            <ul id="watchedReposList" class="space-y-2">
+                <!-- Dynamically populated with JavaScript -->
+            </ul>
         </div>
-    </div>
-    <p class="font-semibold leading-10 text-gray-900 text-center">I know this web interface is awfull but I'm not a web designer ^^.</p>
+    </section>
+
+    <!-- Docker Repo Section -->
+    <section class="bg-[#23453d] rounded-lg shadow-lg p-6 w-full max-w-lg">
+        <h2 class="text-2xl font-semibold mb-4">Add a Docker Repo</h2>
+        <form id="addDockerRepoForm" class="space-y-6">
+            <div>
+                <label for="dockerRepo" class="block text-sm font-medium">Name of the Docker Repo</label>
+                <div class="mt-2 flex items-center border rounded-md bg-gray-700">
+                    <span class="px-3 text-gray-400">hub.docker.com/r/</span>
+                    <input type="text" name="dockerRepo" id="dockerRepo" autocomplete="dockerRepo" class="flex-1 py-2 px-3 bg-transparent focus:outline-none" placeholder="breizhhardware/github-ntfy">
+                </div>
+            </div>
+            <div class="flex justify-end gap-4">
+                <button type="button" class="px-4 py-2 text-gray-400 hover:text-white">Cancel</button>
+                <button type="submit" class="px-4 py-2 bg-green-700 hover:bg-green-600 text-white font-semibold rounded-md">Save</button>
+            </div>
+        </form>
+        <div class="mt-8">
+            <h3 class="text-lg font-semibold mb-2">Watched Docker Repositories</h3>
+            <ul id="watchedDockerReposList" class="space-y-2">
+                <!-- Dynamically populated with JavaScript -->
+            </ul>
+        </div>
+    </section>
+</main>
+
+<footer class="text-center py-6 bg-[#23453d]">
+    <p class="text-sm">I know this web interface is simple, but I'm improving!</p>
+</footer>
 </body>
 </html>
