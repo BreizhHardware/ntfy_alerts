@@ -9,6 +9,7 @@ ADD requirements.txt /
 ADD entrypoint.sh /
 ADD send_ntfy.py /
 ADD send_gotify.py /
+ADD send_discord.py /
 ADD index.html /var/www/html/index.html
 ADD script.js /var/www/html/script.js
 RUN apk add --no-cache sqlite-dev sqlite-libs gcc musl-dev nginx
@@ -25,6 +26,7 @@ ENV USERNAME="" \
     DOCKER_PASSWORD="" \
     GOTIFY_URL="" \
     GOTIFY_TOKEN="" \
+    DISCORD_WEBHOOK_URL="" \
     FLASK_ENV=production
 
 # Exposer le port 5000 pour l'API et le port 80 pour le serveur web
