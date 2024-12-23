@@ -95,7 +95,7 @@ GHNTFY_TOKEN is a github token, it need to have repo, read:org and read:user
 
 ## Contribution
 
-If you want to contribut, feel free to open a pull request (CONTRIBUTION.md comming soon)!
+If you want to contribut, feel free to open a pull request, but first read the [contribution guide](CONTRIBUTION.md)!
 
 ## TODO:
 - [x] Dockerize the ntfy.py
