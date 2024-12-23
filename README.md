@@ -9,11 +9,18 @@
   </a>
 </p>
 
-> This project allow you to have notification about new github or docker hub release on ntfy, gotify and (soon) discord.
+> This project allows you to receive notifications about new GitHub or Docker Hub releases on ntfy, gotify, and Discord.
+
+## Installation
+
+To install the dependencies, run:
+```sh
+pip install -r requirements.txt
+```
 
 ## Usage
 
-If you want to use the docker image you can use the following docker-compose file for x86_64:
+If you want to use the Docker image, you can use the following docker-compose file for x86_64:
 ````yaml
 services:
   github-ntfy:
