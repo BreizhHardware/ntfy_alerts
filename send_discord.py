@@ -15,89 +15,82 @@ def github_send_to_discord(releases, webhook_url):
     conn = get_db_connection()
     cursor = conn.cursor()
     for release in releases:
-        app_name = release["repo"].split("/")[-1]  # Getting the application name from the repo
-        version_number = release["tag_name"]  # Getting the version number
-        app_url = release["html_url"]  # Getting the application URL
-        changelog = release["changelog"]  # Getting the changelog
-        release_date = release["published_at"]  # Getting the release date
-        release_date = release_date.replace("T", " ").replace("Z", "")  # Formatting the release date
+        app_name = release["repo"].split("/")[-1]
+        version_number = release["tag_name"]
+        app_url = release["html_url"]
+        changelog = release["changelog"]
+        release_date = release["published_at"].replace("T", " ").replace("Z", "")
 
-        # Checking if the version has changed since the last time
-        cursor.execute(
-            "SELECT version FROM versions WHERE repo=?",
-            (app_name,),
-        )
+        cursor.execute("SELECT version FROM versions WHERE repo=?", (app_name,))
         previous_version = cursor.fetchone()
         if previous_version and previous_version[0] == version_number:
             logger.info(f"The version of {app_name} has not changed. No notification sent.")
             continue  # Move on to the next application
 
-
-        embeds = {
-                "title": f"New version for {app_name}",
-                "url": app_url,
-                "color": "#027d21",
-                "description": f"New version: {version_number}\nPublished on: {release_date}\nChangelog:\n{changelog}"
-        }
-
+        message = f"New version: {version_number}\nFor: {app_name}\nPublished on: {release_date}\nChangelog:\n{changelog}\n{app_url}"
+        if len(message) > 2000:
+            message = f"New version: {version_number}\nFor: {app_name}\nPublished on: {release_date}\nFull changelog: {app_url}"
+        # Updating the previous version for this application
+        cursor.execute(
+            "INSERT OR REPLACE INTO versions (repo, version, changelog) VALUES (?, ?, ?)",
+            (app_name, version_number, changelog),
+        )
+        conn.commit()
         data = {
-            "content": "New version available",
-            "username": "GitHub Ntfy",
-            "embeds": [embeds]
+            "content": message,
+            "username": "GitHub Ntfy"
         }
         headers = {
             "Content-Type": "application/json"
         }
-        response = requests.post(webhook_url, json = data, headers = headers)
+
+        response = requests.post(webhook_url, json=data, headers=headers)
         if 200 <= response.status_code < 300:
             logger.info(f"Message sent to Discord for {app_name}")
         else:
             logger.error(f"Failed to send message to Discord. Status code: {response.status_code}")
+            logger.error(f"Response: {response.text}")
+    conn.close()
 
 def docker_send_to_discord(releases, webhook_url):
     conn = get_db_connection()
     cursor = conn.cursor()
     for release in releases:
-        app_name = release["repo"].split("/")[-1]  # Getting the application name from the repo
+        app_name = release["repo"].split("/")[-1]
         digest_number = release["digest"]
-        app_url = release["html_url"]  # Getting the application URL
-        release_date = release["published_at"]  # Getting the release date
-        release_date = release_date.replace("T", " ").replace("Z", "")  # Formatting the release date
+        app_url = release["html_url"]
+        release_date = release["published_at"].replace("T", " ").replace("Z", "")
 
-        # Checking if the version has changed since the last time
-        cursor.execute(
-            "SELECT digest FROM docker_versions WHERE repo=?",
-            (app_name,),
-        )
+        cursor.execute("SELECT digest FROM docker_versions WHERE repo=?", (app_name,))
         previous_digest = cursor.fetchone()
         if previous_digest and previous_digest[0] == digest_number:
             logger.info(f"The digest of {app_name} has not changed. No notification sent.")
-            continue  # Move on to the next application
+            continue
 
-        # Creating the embed message
-        embed = {
-            "title": f"New version for {app_name}",
-            "url": app_url,
-            "color": "#027d21",
-            "fields": [
-                {
-                    "name": "Digest",
-                    "value": digest_number,
-                    "inline": True
-                },
-                {
-                    "name": "Published on",
-                    "value": release_date,
-                    "inline": True
-                }
-            ]
-        }
+        message = f"New version for {app_name}\nDigest: {digest_number}\nPublished on: {release_date}\n{app_url}"
+        if len(message) > 2000:
+            message = f"New version for {app_name}\nDigest: {digest_number}\nPublished on: {release_date}\nFull details: {app_url}"
+
+        cursor.execute(
+            "INSERT OR REPLACE INTO docker_versions (repo, digest) VALUES (?, ?)",
+            (app_name, digest_number),
+        )
+        conn.commit()
 
         data = {
-            "embeds": [embed]
+            "content": message,
+            "username": "GitHub Ntfy"
         }
-        response = requests.post(webhook_url, json=data)
-        if response.status_code == 204:
+        headers = {
+            "Content-Type": "application/json"
+        }
+
+        logger.info(f"Sending payload to Discord: {data}")
+
+        response = requests.post(webhook_url, json=data, headers=headers)
+        if 200 <= response.status_code < 300:
             logger.info(f"Message sent to Discord for {app_name}")
         else:
             logger.error(f"Failed to send message to Discord. Status code: {response.status_code}")
+            logger.error(f"Response: {response.text}")
+    conn.close()
