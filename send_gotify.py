@@ -2,20 +2,18 @@ import requests
 import sqlite3
 import logging
 
-conn = sqlite3.connect(
-    "/github-ntfy/ghntfy_versions.db",
-    check_same_thread=False,
-)
-cursor = conn.cursor()
-
 logging.basicConfig(
     level=logging.INFO,
     format="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
 )
 logger = logging.getLogger(__name__)
 
+def get_db_connection():
+    return sqlite3.connect("/github-ntfy/ghntfy_versions.db", check_same_thread=False)
 
 def github_send_to_gotify(releases, token, url):
+    conn = get_db_connection()
+    cursor = conn.cursor()
     url = url + "/message"
     url = url + "?token=" + token
     for release in releases:
@@ -58,6 +56,8 @@ def github_send_to_gotify(releases, token, url):
 
 
 def docker_send_to_gotify(releases, token, url):
+    conn = get_db_connection()
+    cursor = conn.cursor()
     url = url + "/message"
     url = url + "?token=" + token
     for release in releases:

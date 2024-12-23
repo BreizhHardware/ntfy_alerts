@@ -5,6 +5,8 @@ import logging
 import sqlite3
 import subprocess
 import json
+import threading
+
 from send_ntfy import (
     github_send_to_ntfy,
     docker_send_to_ntfy,
@@ -12,6 +14,10 @@ from send_ntfy import (
 from send_gotify import (
     github_send_to_gotify,
     docker_send_to_gotify,
+)
+from send_discord import (
+    github_send_to_discord,
+    docker_send_to_discord,
 )
 
 # Configuring the logger
@@ -28,6 +34,8 @@ if github_token:
 
 docker_username = os.environ.get("DOCKER_USERNAME")
 docker_password = os.environ.get("DOCKER_PASSWORD")
+
+discord_webhook_url = os.environ.get("DISCORD_WEBHOOK_URL")
 
 
 def create_dockerhub_token(username, password):
@@ -169,6 +177,34 @@ def get_changelog(repo):
                 return latest_release_list["body"]
     return "Changelog not available"
 
+def notify_all_services(github_latest_release, docker_latest_release, auth, ntfy_url, gotify_url, gotify_token, discord_webhook_url):
+    threads = []
+
+    if ntfy_url:
+        if github_latest_release:
+            threads.append(threading.Thread(target=github_send_to_ntfy, args=(github_latest_release, auth, ntfy_url)))
+        if docker_latest_release:
+            threads.append(threading.Thread(target=docker_send_to_ntfy, args=(docker_latest_release, auth, ntfy_url)))
+
+    if gotify_url and gotify_token:
+        if github_latest_release:
+            threads.append(threading.Thread(target=github_send_to_gotify, args=(github_latest_release, gotify_token, gotify_url)))
+        if docker_latest_release:
+            threads.append(threading.Thread(target=docker_send_to_gotify, args=(docker_latest_release, gotify_token, gotify_url)))
+
+    if discord_webhook_url:
+        if github_latest_release:
+            threads.append(threading.Thread(target=github_send_to_discord, args=(github_latest_release, discord_webhook_url)))
+        if docker_latest_release:
+            threads.append(threading.Thread(target=docker_send_to_discord, args=(docker_latest_release, discord_webhook_url)))
+
+    for thread in threads:
+        thread.start()
+
+    for thread in threads:
+        thread.join()
+
+
 
 if __name__ == "__main__":
     start_api()
@@ -177,27 +213,19 @@ if __name__ == "__main__":
     ntfy_url = os.environ.get("NTFY_URL")
     gotify_url = os.environ.get("GOTIFY_URL")
     gotify_token = os.environ.get("GOTIFY_TOKEN")
+    discord_webhook_url = os.environ.get("DISCORD_WEBHOOK_URL")
     timeout = float(os.environ.get("GHNTFY_TIMEOUT"))
 
-    if auth and ntfy_url:
+    if auth and (ntfy_url or gotify_url or discord_webhook_url):
         while True:
             github_watched_repos_list = get_watched_repos()
             github_latest_release = get_latest_releases(github_watched_repos_list)
             docker_watched_repos_list = get_docker_watched_repos()
             docker_latest_release = get_latest_docker_releases(docker_watched_repos_list)
-            if ntfy_url != "":
-                if github_latest_release:
-                    github_send_to_ntfy(github_latest_release, auth, ntfy_url)
-                if docker_latest_release:
-                    docker_send_to_ntfy(docker_latest_release, auth, ntfy_url)
 
-            if gotify_url != "" and gotify_token != "":
-                if github_latest_release:
-                    github_send_to_gotify(github_latest_release, gotify_token, gotify_url)
-                if docker_latest_release:
-                    docker_send_to_gotify(docker_latest_release, gotify_token, gotify_url)
+            notify_all_services(github_latest_release, docker_latest_release, auth, ntfy_url, gotify_url, gotify_token, discord_webhook_url)
 
-            time.sleep(timeout)  # Wait an hour before checking again
+            time.sleep(timeout)
     else:
         logger.error("Usage: python ntfy.py")
         logger.error(
@@ -211,4 +239,5 @@ if __name__ == "__main__":
         logger.error(
             "GOTIFY_TOKEN: the token of the gotify server need to be stored in an environment variable named GOTIFY_TOKEN"
         )
+        logger.error("DISCORD_WEBHOOK_URL: the webhook URL for Discord notifications need to be stored in an environment variable named DISCORD_WEBHOOK_URL")
         logger.error("GHNTFY_TIMEOUT: the time interval between each check")

@@ -9,11 +9,18 @@
   </a>
 </p>
 
-> This project allow you to have notification about new github or docker hub release on ntfy, gotify and (soon) discord.
+> This project allows you to receive notifications about new GitHub or Docker Hub releases on ntfy, gotify, and Discord.
+
+## Installation
+
+To install the dependencies, run:
+```sh
+pip install -r requirements.txt
+```
 
 ## Usage
 
-If you want to use the docker image you can use the following docker-compose file for x86_64:
+If you want to use the Docker image, you can use the following docker-compose file for x86_64:
 ````yaml
 services:
   github-ntfy:
@@ -29,6 +36,7 @@ services:
       - DOCKER_PASSWORD= # Default is empty (Docker Hub password)
       - GOTIFY_URL=gotify_url # Required if gotify is used
       - GOTIFY_TOKEN= # Required if gotify is used
+      - DISCORD_WEBHOOK_URL= # Required if discord is used
     volumes:
       - /path/to/github-ntfy:/github-ntfy/
     ports:
@@ -51,6 +59,7 @@ services:
       - DOCKER_PASSWORD= # Default is empty (Docker Hub password)
       - GOTIFY_URL=gotify_url # Required if gotify is used
       - GOTIFY_TOKEN= # Required if gotify is used
+      - DISCORD_WEBHOOK_URL= # Required if discord is used
     volumes:
       - /path/to/github-ntfy:/github-ntfy/
     ports:
@@ -73,6 +82,7 @@ services:
       - DOCKER_PASSWORD= # Default is empty (Docker Hub password)
       - GOTIFY_URL=gotify_url # Required if gotify is used
       - GOTIFY_TOKEN= # Required if gotify is used
+      - DISCORD_WEBHOOK_URL= # Required if discord is used
     volumes:
       - /path/to/github-ntfy:/github-ntfy/
     ports:
@@ -92,7 +102,7 @@ GHNTFY_TOKEN is a github token, it need to have repo, read:org and read:user
 
 ## Contribution
 
-If you want to contribut, feel free to open a pull request (CONTRIBUTION.md comming soon)!
+If you want to contribut, feel free to open a pull request, but first read the [contribution guide](CONTRIBUTION.md)!
 
 ## TODO:
 - [x] Dockerize the ntfy.py
@@ -102,7 +112,7 @@ If you want to contribut, feel free to open a pull request (CONTRIBUTION.md comm
 - [x] Add Docker Hub compatibility
 - [ ] Rework of the web interface
 - [x] Compatibility with Gotify
-- [ ] Compatibility with Discord Webhook
+- [x] Compatibility with Discord Webhook
 - [x] Compatibility and distribution for arm64 and armv7
 
 ## Show your support
