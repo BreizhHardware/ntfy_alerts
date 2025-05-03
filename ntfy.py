@@ -20,6 +20,11 @@ from send_discord import (
     docker_send_to_discord,
 )
 
+from send_slack import (
+    github_send_to_slack,
+    docker_send_to_slack,
+)
+
 # Configuring the logger
 logging.basicConfig(
     level=logging.INFO,
@@ -39,7 +44,7 @@ discord_webhook_url = os.environ.get("DISCORD_WEBHOOK_URL")
 
 
 def create_dockerhub_token(username, password):
-    url = "https://hub.docker.com//v2/users/login"
+    url = "https://hub.docker.com/v2/users/login"
     headers = {"Content-Type": "application/json"}
     data = json.dumps({"username": username, "password": password})
 
@@ -177,7 +182,7 @@ def get_changelog(repo):
                 return latest_release_list["body"]
     return "Changelog not available"
 
-def notify_all_services(github_latest_release, docker_latest_release, auth, ntfy_url, gotify_url, gotify_token, discord_webhook_url):
+def notify_all_services(github_latest_release, docker_latest_release, auth, ntfy_url, gotify_url, gotify_token, discord_webhook_url, slack_webhook_url):
     threads = []
 
     if ntfy_url:
@@ -198,6 +203,12 @@ def notify_all_services(github_latest_release, docker_latest_release, auth, ntfy
         if docker_latest_release:
             threads.append(threading.Thread(target=docker_send_to_discord, args=(docker_latest_release, discord_webhook_url)))
 
+    if slack_webhook_url:
+        if github_latest_release:
+            threads.append(threading.Thread(target=github_send_to_slack, args=(github_latest_release, slack_webhook_url)))
+        if docker_latest_release:
+            threads.append(threading.Thread(target=docker_send_to_slack, args=(docker_latest_release, slack_webhook_url)))
+    
     for thread in threads:
         thread.start()
 
@@ -215,6 +226,7 @@ if __name__ == "__main__":
     gotify_token = os.environ.get("GOTIFY_TOKEN")
     discord_webhook_url = os.environ.get("DISCORD_WEBHOOK_URL")
     timeout = float(os.environ.get("GHNTFY_TIMEOUT"))
+    slack_webhook_url = os.environ.get("SLACK_WEBHOOK_URL")
 
     if auth and (ntfy_url or gotify_url or discord_webhook_url):
         while True:
@@ -223,7 +235,7 @@ if __name__ == "__main__":
             docker_watched_repos_list = get_docker_watched_repos()
             docker_latest_release = get_latest_docker_releases(docker_watched_repos_list)
 
-            notify_all_services(github_latest_release, docker_latest_release, auth, ntfy_url, gotify_url, gotify_token, discord_webhook_url)
+            notify_all_services(github_latest_release, docker_latest_release, auth, ntfy_url, gotify_url, gotify_token, discord_webhook_url, slack_webhook_url)
 
             time.sleep(timeout)
     else:
