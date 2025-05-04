@@ -27,9 +27,9 @@ def github_send_to_discord(releases, webhook_url):
             logger.info(f"The version of {app_name} has not changed. No notification sent.")
             continue  # Move on to the next application
 
-        message = f"New version: {version_number}\nFor: {app_name}\nPublished on: {release_date}\nChangelog:\n{changelog}\n{app_url}"
+        message = f"📌 *New version*: {version_number}\n\n📦*For*: {app_name}\n\n📅 *Published on*: {release_date}\n\n📝 *Changelog*:\n\n```{changelog}```"
         if len(message) > 2000:
-            message = f"New version: {version_number}\nFor: {app_name}\nPublished on: {release_date}\nFull changelog: {app_url}"
+            message = f"📌 *New version*: {version_number}\n\n📦*For*: {app_name}\n\n📅 *Published on*: {release_date}\n\n🔗 *Release Link*: {app_url}"
         # Updating the previous version for this application
         cursor.execute(
             "INSERT OR REPLACE INTO versions (repo, version, changelog) VALUES (?, ?, ?)",
@@ -67,9 +67,7 @@ def docker_send_to_discord(releases, webhook_url):
             logger.info(f"The digest of {app_name} has not changed. No notification sent.")
             continue
 
-        message = f"New version for {app_name}\nDigest: {digest_number}\nPublished on: {release_date}\n{app_url}"
-        if len(message) > 2000:
-            message = f"New version for {app_name}\nDigest: {digest_number}\nPublished on: {release_date}\nFull details: {app_url}"
+        message = f"🐳 *Docker Image Updated!*\n\n🔐 *New Digest*: `{digest_number}`\n\n📦 *App*: {app_name}\n\n📢*Published*: {release_date}\n\n🔗 *Link*: {app_url}"
 
         cursor.execute(
             "INSERT OR REPLACE INTO docker_versions (repo, digest) VALUES (?, ?)",

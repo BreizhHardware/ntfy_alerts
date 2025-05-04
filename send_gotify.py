@@ -34,7 +34,7 @@ def github_send_to_gotify(releases, token, url):
             logger.info(f"The version of {app_name} has not changed. No notification sent.")
             continue  # Move on to the next application
 
-        message = f"New version: {version_number}\nFor: {app_name}\nPublished on: {release_date}\nChangelog:\n{changelog}\n{app_url}"
+        message = f"📌 *New version*: {version_number}\n\n📦*For*: {app_name}\n\n📅 *Published on*: {release_date}\n\n📝 *Changelog*:\n\n```{changelog}```\n\n🔗 *Release Url*:{app_url}"
         # Updating the previous version for this application
         cursor.execute(
             "INSERT OR REPLACE INTO versions (repo, version, changelog) VALUES (?, ?, ?)",
@@ -77,7 +77,7 @@ def docker_send_to_gotify(releases, token, url):
             logger.info(f"The digest of {app_name} has not changed. No notification sent.")
             continue  # Move on to the next application
 
-        message = f"New version: {digest_number}\nFor: {app_name}\nPublished on: {release_date}\n{app_url}"
+        message = f"🐳 *Docker Image Updated!*\n\n🔐 *New Digest*: `{digest_number}`\n\n📦 *App*: {app_name}\n\n📢 *Published*: {release_date}\n\n🔗 *Release Url*:{app_url}"
         # Updating the previous digest for this application
         cursor.execute(
             "INSERT OR REPLACE INTO docker_versions (repo, digest) VALUES (?, ?, ?)",
