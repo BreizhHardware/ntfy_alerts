@@ -37,6 +37,7 @@ services:
       - GOTIFY_URL=gotify_url # Required if gotify is used
       - GOTIFY_TOKEN= # Required if gotify is used
       - DISCORD_WEBHOOK_URL= # Required if discord is used
+      - SLACK_WEBHOOK_URL= # Required if Slack is used
     volumes:
       - /path/to/github-ntfy:/github-ntfy/
     ports:
@@ -60,6 +61,7 @@ services:
       - GOTIFY_URL=gotify_url # Required if gotify is used
       - GOTIFY_TOKEN= # Required if gotify is used
       - DISCORD_WEBHOOK_URL= # Required if discord is used
+      - SLACK_WEBHOOK_URL= # Required if Slack is used
     volumes:
       - /path/to/github-ntfy:/github-ntfy/
     ports:
@@ -83,6 +85,7 @@ services:
       - GOTIFY_URL=gotify_url # Required if gotify is used
       - GOTIFY_TOKEN= # Required if gotify is used
       - DISCORD_WEBHOOK_URL= # Required if discord is used
+      - SLACK_WEBHOOK_URL= # Required if Slack is used
     volumes:
       - /path/to/github-ntfy:/github-ntfy/
     ports:
