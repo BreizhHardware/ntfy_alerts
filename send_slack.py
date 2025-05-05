@@ -11,10 +11,10 @@ logger = logging.getLogger(__name__)
 def get_db_connection():
     return sqlite3.connect("/github-ntfy/ghntfy_versions.db", check_same_thread=False)
 
-def github_send_to_discord(releases, webhook_url):
+def github_send_to_slack(releases, webhook_url):
     conn = get_db_connection()
     cursor = conn.cursor()
-    for release in releases:
+    for release in releases: 
         app_name = release["repo"].split("/")[-1]
         version_number = release["tag_name"]
         app_url = release["html_url"]
@@ -25,34 +25,54 @@ def github_send_to_discord(releases, webhook_url):
         previous_version = cursor.fetchone()
         if previous_version and previous_version[0] == version_number:
             logger.info(f"The version of {app_name} has not changed. No notification sent.")
-            continue  # Move on to the next application
+            continue
 
         message = f"📌 *New version*: {version_number}\n\n📦*For*: {app_name}\n\n📅 *Published on*: {release_date}\n\n📝 *Changelog*:\n\n```{changelog}```"
         if len(message) > 2000:
-            message = f"📌 *New version*: {version_number}\n\n📦*For*: {app_name}\n\n📅 *Published on*: {release_date}\n\n🔗 *Release Link*: {app_url}"
-        # Updating the previous version for this application
+             message = f"📌 *New version*: {version_number}\n\n📦*For*: {app_name}\n\n📅 *Published on*: {release_date}\n\n📝 *Changelog*:\n\n `truncated..` use 🔗 instead "
+
         cursor.execute(
             "INSERT OR REPLACE INTO versions (repo, version, changelog) VALUES (?, ?, ?)",
             (app_name, version_number, changelog),
         )
         conn.commit()
-        data = {
-            "content": message,
-            "username": "GitHub Ntfy"
+
+
+        message = {
+            "blocks": [
+                {
+                    "type": "section",
+                    "text": {
+                        "type": "mrkdwn",
+                        "text": f"{message}"
+                    },
+                    "accessory": {
+                        "type": "button",
+                        "text": {
+                            "type": "plain_text",
+                            "text": "🔗 Release Url"
+                        },
+                        "url": f"{app_url}",
+                        "action_id": "button-action"
+                    }
+                },
+                {
+                    "type": "divider"
+                }
+            ]
         }
         headers = {
             "Content-Type": "application/json"
         }
-
-        response = requests.post(webhook_url, json=data, headers=headers)
-        if 200 <= response.status_code < 300:
-            logger.info(f"Message sent to Discord for {app_name}")
+        response = requests.post(webhook_url, json=message, headers=headers)
+        if response.status_code == 200:
+            logger.info(f"Message sent to Slack for {app_name}")
         else:
-            logger.error(f"Failed to send message to Discord. Status code: {response.status_code}")
+            logger.error(f"Failed to send message to Slack. Status code: {response.status_code}")
             logger.error(f"Response: {response.text}")
     conn.close()
 
-def docker_send_to_discord(releases, webhook_url):
+def docker_send_to_slack(releases, webhook_url):
     conn = get_db_connection()
     cursor = conn.cursor()
     for release in releases:
@@ -67,7 +87,7 @@ def docker_send_to_discord(releases, webhook_url):
             logger.info(f"The digest of {app_name} has not changed. No notification sent.")
             continue
 
-        message = f"🐳 *Docker Image Updated!*\n\n🔐 *New Digest*: `{digest_number}`\n\n📦 *App*: {app_name}\n\n📢*Published*: {release_date}\n\n🔗 *Link*: {app_url}"
+        message = f"🐳 *Docker Image Updated!*\n\n🔐 *New Digest*: `{digest_number}`\n\n📦 *App*: {app_name}\n\n📢*Published*: {release_date}"
 
         cursor.execute(
             "INSERT OR REPLACE INTO docker_versions (repo, digest) VALUES (?, ?)",
@@ -75,20 +95,37 @@ def docker_send_to_discord(releases, webhook_url):
         )
         conn.commit()
 
-        data = {
-            "content": message,
-            "username": "GitHub Ntfy"
+        message = {
+            "blocks": [
+                {
+                    "type": "section",
+                    "text": {
+                        "type": "mrkdwn",
+                        "text": f"{message}"
+                    },
+                    "accessory": {
+                        "type": "button",
+                        "text": {
+                            "type": "plain_text",
+                            "text": "🔗 Release Url"
+                        },
+                        "url": f"{app_url}",
+                        "action_id": "button-action"
+                    }
+                },
+                {
+                    "type": "divider"
+                }
+            ]
         }
         headers = {
             "Content-Type": "application/json"
         }
-
-        logger.info(f"Sending payload to Discord: {data}")
-
-        response = requests.post(webhook_url, json=data, headers=headers)
+        response = requests.post(webhook_url, json=message, headers=headers)
         if 200 <= response.status_code < 300:
-            logger.info(f"Message sent to Discord for {app_name}")
+            logger.info(f"Message sent to Slack for {app_name}")
         else:
-            logger.error(f"Failed to send message to Discord. Status code: {response.status_code}")
+            logger.error(f"Failed to send message to Slack. Status code: {response.status_code}")
             logger.error(f"Response: {response.text}")
     conn.close()
+

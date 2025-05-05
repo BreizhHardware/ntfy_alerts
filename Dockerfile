@@ -27,6 +27,7 @@ ENV USERNAME="" \
     GOTIFY_URL="" \
     GOTIFY_TOKEN="" \
     DISCORD_WEBHOOK_URL="" \
+    SLACK_WEBHOOK_URL="" \
     FLASK_ENV=production
 
 # Exposer le port 5000 pour l'API et le port 80 pour le serveur web
