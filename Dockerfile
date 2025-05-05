@@ -10,6 +10,7 @@ ADD entrypoint.sh /
 ADD send_ntfy.py /
 ADD send_gotify.py /
 ADD send_discord.py /
+ADD send_slack.py /
 ADD index.html /var/www/html/index.html
 ADD script.js /var/www/html/script.js
 RUN apk add --no-cache sqlite-dev sqlite-libs musl-dev nginx gcc
