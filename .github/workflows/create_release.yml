@@ -74,6 +74,7 @@ jobs:
           passthrough = [
             "RUSTFLAGS",
             "OPENSSL_STATIC",
+            "OPENSSL_NO_VENDOR"
           ]
           EOF
 
@@ -81,8 +82,9 @@ jobs:
         env:
           OPENSSL_STATIC: 1
           RUSTFLAGS: "-C target-feature=+crt-static"
+          OPENSSL_NO_VENDOR: 0
         run: |
-          cross build --release --target ${{ matrix.target }}
+          cross build --release --target ${{ matrix.target }} --features vendored-openssl
 
       - name: Préparer le binaire
         run: |

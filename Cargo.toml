@@ -7,6 +7,9 @@ edition = "2021"
 name = "github-ntfy"
 path = "src/main.rs"
 
+[features]
+vendored-openssl = ["openssl/vendored"]
+
 [dependencies]
 tokio = { version = "1", features = ["full"] }
 reqwest = { version = "0.11", features = ["json", "blocking"] }
@@ -18,3 +21,4 @@ env_logger = "0.10"
 dotenv = "0.15"
 chrono = "0.4"
 warp = "0.3"
+openssl = { version = "0.10", features = ["vendored"] }

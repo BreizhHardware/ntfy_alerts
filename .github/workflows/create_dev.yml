@@ -35,22 +35,24 @@ jobs:
       - name: Installer cross
         run: cargo install cross
 
-      - name: Créer Cross.toml pour spécifier OpenSSL statique
+      - name: Créer Cross.toml pour spécifier OpenSSL vendored
         run: |
           cat > Cross.toml << 'EOF'
           [build.env]
           passthrough = [
             "RUSTFLAGS",
             "OPENSSL_STATIC",
+            "OPENSSL_NO_VENDOR"
           ]
           EOF
 
-      - name: Construire avec cross
+      - name: Construire avec cross et OpenSSL vendored
         env:
           OPENSSL_STATIC: 1
           RUSTFLAGS: "-C target-feature=+crt-static"
+          OPENSSL_NO_VENDOR: 0
         run: |
-          cross build --release --target ${{ matrix.target }}
+          cross build --release --target ${{ matrix.target }} --features vendored-openssl
 
       - name: Préparer le binaire
         run: |
