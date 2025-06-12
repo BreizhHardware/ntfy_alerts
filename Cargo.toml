@@ -1,11 +1,11 @@
 [package]
 name = "github-ntfy"
-version = "0.1.0"
+version = "2.0.0"
 edition = "2021"
 
 [[bin]]
 name = "github-ntfy"
-path = "ntfy.rs"
+path = "src/main.rs"
 
 [dependencies]
 tokio = { version = "1", features = ["full"] }

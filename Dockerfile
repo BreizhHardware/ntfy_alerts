@@ -18,8 +18,7 @@ RUN mkdir src && \
     rm -rf src
 
 # Copy real file
-COPY ntfy.rs ./src/main.rs
-COPY api.rs ./src/api.rs
+COPY src/ ./src/
 
 # Build the application
 RUN cargo build --release
