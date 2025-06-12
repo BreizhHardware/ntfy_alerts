@@ -138,6 +138,6 @@ jobs:
           push: true
           platforms: linux/amd64,linux/arm64
           tags: |
-            ${{ secrets.DOCKER_USERNAME }}/github-ntfy:dev
-            ${{ secrets.DOCKER_USERNAME }}/github-ntfy:${{ needs.version.outputs.version }}
+            breizhhardware/github-ntfy:dev
+            breizhhardware/github-ntfy:${{ needs.version.outputs.version }}
           file: Dockerfile.multi
