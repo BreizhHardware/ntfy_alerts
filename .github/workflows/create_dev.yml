@@ -17,9 +17,6 @@ jobs:
           - target: aarch64-unknown-linux-musl
             platform: linux/arm64
             name: github-ntfy-arm64
-          - target: armv7-unknown-linux-musleabihf
-            platform: linux/arm/v7
-            name: github-ntfy-armv7
 
     steps:
       - name: Checkout code
@@ -66,7 +63,7 @@ jobs:
           path: release/${{ matrix.name }}
 
   docker-build-push:
-    needs: [build-binaries]
+    needs: [ version, build-binaries ]
     runs-on: ubuntu-latest
     steps:
       - name: Checkout code
@@ -98,13 +95,53 @@ jobs:
           cp binaries/github-ntfy-arm64/github-ntfy-arm64 binaries-docker/
           cp binaries/github-ntfy-armv7/github-ntfy-armv7 binaries-docker/
           chmod +x binaries-docker/*
-          ls -la binaries-docker/
 
-      - name: Construire et pousser l'image Docker dev
+      - name: Créer Dockerfile spécifique pour chaque architecture
+        run: |
+          # Créer un Dockerfile séparé pour chaque architecture
+          cat > Dockerfile.multi << 'EOF'
+          FROM --platform=${TARGETPLATFORM} alpine:3.22
+
+          ARG TARGETPLATFORM
+          ARG TARGETARCH
+          ARG TARGETVARIANT
+
+          # Copier le binaire approprié selon l'architecture
+          COPY binaries-docker/github-ntfy-amd64 /usr/local/bin/github-ntfy-amd64
+          COPY binaries-docker/github-ntfy-arm64 /usr/local/bin/github-ntfy-arm64
+          COPY binaries-docker/github-ntfy-armv7 /usr/local/bin/github-ntfy-armv7
+
+          # Installer des outils pour débogage et déplacer le bon binaire
+          RUN apk add --no-cache sqlite-libs openssl nginx && \
+              if [ "$TARGETARCH" = "amd64" ]; then \
+                cp /usr/local/bin/github-ntfy-amd64 /usr/local/bin/github-ntfy; \
+              elif [ "$TARGETARCH" = "arm64" ]; then \
+                cp /usr/local/bin/github-ntfy-arm64 /usr/local/bin/github-ntfy; \
+              elif [ "$TARGETARCH" = "arm" ] && [ "$TARGETVARIANT" = "v7" ]; then \
+                cp /usr/local/bin/github-ntfy-armv7 /usr/local/bin/github-ntfy; \
+              fi && \
+              chmod +x /usr/local/bin/github-ntfy && \
+              rm /usr/local/bin/github-ntfy-*
+
+          WORKDIR /app
+          COPY web /app/web
+          COPY config.toml /app/config.toml
+
+          ENV DB_PATH=/data
+          VOLUME /data
+          EXPOSE 8080
+
+          ENTRYPOINT ["/usr/local/bin/github-ntfy"]
+          CMD ["--config", "/app/config.toml"]
+          EOF
+
+      - name: Construire et pousser l'image Docker multi-architecture
         uses: docker/build-push-action@v6
         with:
           context: .
           push: true
           platforms: linux/amd64,linux/arm64,linux/arm/v7
-          tags: ${{ secrets.DOCKER_USERNAME }}/github-ntfy:dev
+          tags: |
+            ${{ secrets.DOCKER_USERNAME }}/github-ntfy:dev
+            ${{ secrets.DOCKER_USERNAME }}/github-ntfy:${{ needs.version.outputs.version }}
           file: Dockerfile.multi

@@ -49,9 +49,6 @@ jobs:
           - target: aarch64-unknown-linux-musl
             platform: linux/arm64
             name: github-ntfy-arm64
-          - target: armv7-unknown-linux-musleabihf
-            platform: linux/arm/v7
-            name: github-ntfy-armv7
 
     steps:
       - name: Checkout code
