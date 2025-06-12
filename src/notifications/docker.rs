@@ -3,6 +3,22 @@ use crate::models::DockerReleaseInfo;
 use crate::config::Config;
 use crate::notifications::{ntfy, gotify, discord, slack};
 
+pub async fn send_to_ntfy(release: DockerReleaseInfo, auth: &str, ntfy_url: &str) {
+    ntfy::send_docker_notification(&release, auth, ntfy_url).await;
+}
+
+pub async fn send_to_gotify(release: DockerReleaseInfo, token: &str, gotify_url: &str) {
+    gotify::send_docker_notification(&release, token, gotify_url).await;
+}
+
+pub async fn send_to_discord(release: DockerReleaseInfo, webhook_url: &str) {
+    discord::send_docker_notification(&release, webhook_url).await;
+}
+
+pub async fn send_to_slack(release: DockerReleaseInfo, webhook_url: &str) {
+    slack::send_docker_notification(&release, webhook_url).await;
+}
+
 pub async fn send_notifications(releases: &[DockerReleaseInfo], config: &Config) {
     let mut tasks = Vec::new();
 
@@ -13,7 +29,7 @@ pub async fn send_notifications(releases: &[DockerReleaseInfo], config: &Config)
             let auth = config.auth.clone();
             let url_clone = url.clone();
             tasks.push(task::spawn(async move {
-                ntfy::send_docker_notification(&release_clone, &auth, &url_clone).await;
+                send_to_ntfy(release_clone, &auth, &url_clone).await;
             }));
         }
 
@@ -23,7 +39,7 @@ pub async fn send_notifications(releases: &[DockerReleaseInfo], config: &Config)
             let token = gotify_token.clone();
             let url = gotify_url.clone();
             tasks.push(task::spawn(async move {
-                gotify::send_docker_notification(&release_clone, &token, &url).await;
+                send_to_gotify(release_clone, &token, &url).await;
             }));
         }
 
@@ -32,7 +48,7 @@ pub async fn send_notifications(releases: &[DockerReleaseInfo], config: &Config)
             let release_clone = release.clone();
             let url = discord_url.clone();
             tasks.push(task::spawn(async move {
-                discord::send_docker_notification(&release_clone, &url).await;
+                send_to_discord(release_clone, &url).await;
             }));
         }
 
@@ -41,7 +57,7 @@ pub async fn send_notifications(releases: &[DockerReleaseInfo], config: &Config)
             let release_clone = release.clone();
             let url = slack_url.clone();
             tasks.push(task::spawn(async move {
-                slack::send_docker_notification(&release_clone, &url).await;
+                send_to_slack(release_clone, &url).await;
             }));
         }
     }

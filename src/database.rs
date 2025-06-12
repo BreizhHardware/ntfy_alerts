@@ -1,15 +1,21 @@
 use log::info;
-use rusqlite::{Connection, Result as SqliteResult};
+use rusqlite::{Connection, Result as SqliteResult, OpenFlags};
 use std::env;
+use std::path::Path;
 
 pub fn init_databases() -> SqliteResult<(Connection, Connection)> {
     let db_path = env::var("DB_PATH").unwrap_or_else(|_| "/github-ntfy".to_string());
-    std::fs::create_dir_all(&db_path).ok();
+
+    if let Err(e) = std::fs::create_dir_all(&db_path) {
+        info!("Error while creating directory {}: {}", db_path, e);
+    }
 
     let versions_path = format!("{}/ghntfy_versions.db", db_path);
     let repos_path = format!("{}/watched_repos.db", db_path);
 
-    let conn = Connection::open(&versions_path)?;
+    let conn = Connection::open_with_flags(&versions_path, OpenFlags::SQLITE_OPEN_CREATE | OpenFlags::SQLITE_OPEN_READ_WRITE | OpenFlags::SQLITE_OPEN_URI)?;
+
+    info!("Database open at {}", versions_path);
 
     conn.execute(
         "CREATE TABLE IF NOT EXISTS versions (
@@ -28,7 +34,9 @@ pub fn init_databases() -> SqliteResult<(Connection, Connection)> {
         [],
     )?;
 
-    let conn2 = Connection::open(&repos_path)?;
+    let conn2 = Connection::open_with_flags(&repos_path, OpenFlags::SQLITE_OPEN_CREATE | OpenFlags::SQLITE_OPEN_READ_WRITE | OpenFlags::SQLITE_OPEN_URI)?;
+
+    info!("Database open at {}", repos_path);
 
     conn2.execute(
         "CREATE TABLE IF NOT EXISTS watched_repos (
