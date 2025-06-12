@@ -406,3 +406,7 @@ github-ntfy/
 github-ntfy/*
 
 *.db
+
+# Rust
+target
+target/*

@@ -1,44 +1,12 @@
-name: Build et Release Multi-Architectures
+name: Build et Push Docker Dev Image
 
 on:
   push:
     branches:
-      - main
+      - dev
 
 jobs:
-  version:
-    runs-on: ubuntu-latest
-    outputs:
-      version: ${{ steps.version.outputs.tag }}
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
-        with:
-          fetch-depth: 0
-
-      - name: Calculer la prochaine version
-        id: version
-        run: |
-          # Récupérer la dernière version ou utiliser v0.1.0 si aucune n'existe
-          LATEST_TAG=$(git describe --tags --abbrev=0 2>/dev/null || echo "v0.1.0")
-          echo "Dernière version: $LATEST_TAG"
-          
-          # Extraire les composants de version
-          VERSION=${LATEST_TAG#v}
-          MAJOR=$(echo $VERSION | cut -d. -f1)
-          MINOR=$(echo $VERSION | cut -d. -f2)
-          PATCH=$(echo $VERSION | cut -d. -f3)
-          
-          # Incrémenter le patch
-          PATCH=$((PATCH + 1))
-          
-          # Nouvelle version
-          NEW_VERSION="v$MAJOR.$MINOR.$PATCH"
-          echo "Nouvelle version: $NEW_VERSION"
-          echo "tag=$NEW_VERSION" >> $GITHUB_OUTPUT
-
   build-binaries:
-    needs: version
     runs-on: ubuntu-latest
     strategy:
       matrix:
@@ -83,7 +51,7 @@ jobs:
           path: release/${{ matrix.name }}
 
   docker-build-push:
-    needs: [version, build-binaries]
+    needs: [build-binaries]
     runs-on: ubuntu-latest
     steps:
       - name: Checkout code
@@ -117,41 +85,12 @@ jobs:
           chmod +x binaries-docker/*
           ls -la binaries-docker/
 
-      # Construire et pousser l'image multi-architecture
-      - name: Construire et pousser l'image Docker multi-architecture
+      # Construire et pousser l'image Docker dev
+      - name: Construire et pousser l'image Docker dev
         uses: docker/build-push-action@v6
         with:
           context: .
           push: true
           platforms: linux/amd64,linux/arm64,linux/arm/v7
-          tags: |
-            ${{ secrets.DOCKER_USERNAME }}/github-ntfy:latest
-            ${{ secrets.DOCKER_USERNAME }}/github-ntfy:${{ needs.version.outputs.version }}
+          tags: ${{ secrets.DOCKER_USERNAME }}/github-ntfy:dev
           file: Dockerfile.multi
-
-  create-release:
-    needs: [version, build-binaries]
-    runs-on: ubuntu-latest
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
-
-      - name: Télécharger tous les binaires
-        uses: actions/download-artifact@v3
-        with:
-          path: binaries
-
-      - name: Créer une release GitHub
-        uses: softprops/action-gh-release@v1
-        with:
-          tag_name: ${{ needs.version.outputs.version }}
-          name: Release ${{ needs.version.outputs.version }}
-          files: |
-            binaries/github-ntfy-amd64/github-ntfy-amd64
-            binaries/github-ntfy-arm64/github-ntfy-arm64
-            binaries/github-ntfy-armv7/github-ntfy-armv7
-          draft: false
-          prerelease: false
-          generate_release_notes: true
-        env:
-          GITHUB_TOKEN: ${{ secrets.TOKEN }}
