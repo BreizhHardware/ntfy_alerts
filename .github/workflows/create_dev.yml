@@ -35,7 +35,20 @@ jobs:
       - name: Installer cross
         run: cargo install cross
 
+      - name: Créer Cross.toml pour spécifier OpenSSL statique
+        run: |
+          cat > Cross.toml << 'EOF'
+          [build.env]
+          passthrough = [
+            "RUSTFLAGS",
+            "OPENSSL_STATIC",
+          ]
+          EOF
+
       - name: Construire avec cross
+        env:
+          OPENSSL_STATIC: 1
+          RUSTFLAGS: "-C target-feature=+crt-static"
         run: |
           cross build --release --target ${{ matrix.target }}
 
@@ -85,7 +98,6 @@ jobs:
           chmod +x binaries-docker/*
           ls -la binaries-docker/
 
-      # Construire et pousser l'image Docker dev
       - name: Construire et pousser l'image Docker dev
         uses: docker/build-push-action@v6
         with:
