@@ -1,0 +1,50 @@
+FROM alpine:3.22
+
+# Installer les dépendances nécessaires
+RUN apk add --no-cache sqlite-libs openssl nginx
+
+# Copier les fichiers web statiques
+COPY index.html /var/www/html/index.html
+COPY script.js /var/www/html/script.js
+
+# Copier les binaires compilés en fonction de l'architecture
+ARG TARGETARCH
+ARG TARGETVARIANT
+COPY binaries-docker/github-ntfy-${TARGETARCH}${TARGETVARIANT} /usr/local/bin/github-ntfy
+
+# Corriger pour arm/v7
+RUN if [ -f /usr/local/bin/github-ntfyv7 ]; then \
+        mv /usr/local/bin/github-ntfyv7 /usr/local/bin/github-ntfy; \
+    fi
+
+# Rendre le binaire exécutable
+RUN chmod +x /usr/local/bin/github-ntfy
+
+# Copier la configuration nginx
+COPY nginx.conf /etc/nginx/nginx.conf
+
+# Copier et rendre exécutable le script d'entrée
+COPY entrypoint.sh /
+RUN chmod 700 /entrypoint.sh
+
+# Définir les variables d'environnement
+ENV USERNAME="" \
+    PASSWORD="" \
+    NTFY_URL="" \
+    GHNTFY_TIMEOUT="3600" \
+    GHNTFY_TOKEN="" \
+    DOCKER_USERNAME="" \
+    DOCKER_PASSWORD="" \
+    GOTIFY_URL="" \
+    GOTIFY_TOKEN="" \
+    DISCORD_WEBHOOK_URL="" \
+    SLACK_WEBHOOK_URL="" \
+    DB_PATH="/data"
+
+# Créer le répertoire des données
+RUN mkdir -p /data && chmod 755 /data
+
+# Exposer les ports pour l'API et le serveur web
+EXPOSE 8080 80
+
+ENTRYPOINT ["/entrypoint.sh"]

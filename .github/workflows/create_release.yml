@@ -1,4 +1,4 @@
-name: Docker Build and Release
+name: Build et Release Multi-Architectures
 
 on:
   push:
@@ -6,25 +6,152 @@ on:
       - main
 
 jobs:
-  build-and-push-on-docker-hub:
+  version:
     runs-on: ubuntu-latest
+    outputs:
+      version: ${{ steps.version.outputs.tag }}
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Calculer la prochaine version
+        id: version
+        run: |
+          # Récupérer la dernière version ou utiliser v0.1.0 si aucune n'existe
+          LATEST_TAG=$(git describe --tags --abbrev=0 2>/dev/null || echo "v0.1.0")
+          echo "Dernière version: $LATEST_TAG"
+          
+          # Extraire les composants de version
+          VERSION=${LATEST_TAG#v}
+          MAJOR=$(echo $VERSION | cut -d. -f1)
+          MINOR=$(echo $VERSION | cut -d. -f2)
+          PATCH=$(echo $VERSION | cut -d. -f3)
+          
+          # Incrémenter le patch
+          PATCH=$((PATCH + 1))
+          
+          # Nouvelle version
+          NEW_VERSION="v$MAJOR.$MINOR.$PATCH"
+          echo "Nouvelle version: $NEW_VERSION"
+          echo "tag=$NEW_VERSION" >> $GITHUB_OUTPUT
+
+  build-binaries:
+    needs: version
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        include:
+          - target: x86_64-unknown-linux-musl
+            platform: linux/amd64
+            name: github-ntfy-amd64
+          - target: aarch64-unknown-linux-musl
+            platform: linux/arm64
+            name: github-ntfy-arm64
+          - target: armv7-unknown-linux-musleabihf
+            platform: linux/arm/v7
+            name: github-ntfy-armv7
 
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
 
-      - name: Set up Docker Buildx
+      - name: Installer Rust
+        uses: actions-rs/toolchain@v1
+        with:
+          toolchain: stable
+          target: ${{ matrix.target }}
+          override: true
+
+      - name: Installer cross
+        run: cargo install cross
+
+      - name: Construire avec cross
+        run: |
+          cross build --release --target ${{ matrix.target }}
+
+      - name: Préparer le binaire
+        run: |
+          mkdir -p release
+          cp target/${{ matrix.target }}/release/github-ntfy release/${{ matrix.name }}
+
+      - name: Upload binaire comme artifact
+        uses: actions/upload-artifact@v3
+        with:
+          name: ${{ matrix.name }}
+          path: release/${{ matrix.name }}
+
+  docker-build-push:
+    needs: [version, build-binaries]
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Configurer QEMU
+        uses: docker/setup-qemu-action@v3
+        with:
+          platforms: arm64,arm/v7
+
+      - name: Configurer Docker Buildx
         uses: docker/setup-buildx-action@v3
 
-      - name: Log in to Docker Hub
+      - name: Login Docker Hub
         uses: docker/login-action@v3
         with:
           username: ${{ secrets.DOCKER_USERNAME }}
           password: ${{ secrets.DOCKER_PASSWORD }}
 
-      - name: Build and push Docker image
+      - name: Télécharger tous les binaires
+        uses: actions/download-artifact@v3
+        with:
+          path: binaries
+
+      - name: Préparer les binaires pour Docker
+        run: |
+          mkdir -p binaries-docker
+          cp binaries/github-ntfy-amd64/github-ntfy-amd64 binaries-docker/
+          cp binaries/github-ntfy-arm64/github-ntfy-arm64 binaries-docker/
+          cp binaries/github-ntfy-armv7/github-ntfy-armv7 binaries-docker/
+          chmod +x binaries-docker/*
+          ls -la binaries-docker/
+
+      # Construire et pousser l'image multi-architecture
+      - name: Construire et pousser l'image Docker multi-architecture
         uses: docker/build-push-action@v6
         with:
           context: .
           push: true
-          tags: ${{ secrets.DOCKER_USERNAME }}/github-ntfy:latest
+          platforms: linux/amd64,linux/arm64,linux/arm/v7
+          tags: |
+            ${{ secrets.DOCKER_USERNAME }}/github-ntfy:latest
+            ${{ secrets.DOCKER_USERNAME }}/github-ntfy:${{ needs.version.outputs.version }}
+          file: Dockerfile.multi
+
+  create-release:
+    needs: [version, build-binaries]
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Télécharger tous les binaires
+        uses: actions/download-artifact@v3
+        with:
+          path: binaries
+
+      - name: Créer une release GitHub
+        uses: softprops/action-gh-release@v1
+        with:
+          tag_name: ${{ needs.version.outputs.version }}
+          name: Release ${{ needs.version.outputs.version }}
+          files: |
+            binaries/github-ntfy-amd64/github-ntfy-amd64
+            binaries/github-ntfy-arm64/github-ntfy-arm64
+            binaries/github-ntfy-armv7/github-ntfy-armv7
+          draft: false
+          prerelease: false
+          generate_release_notes: true
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
