@@ -104,7 +104,7 @@ jobs:
       - name: Configurer QEMU
         uses: docker/setup-qemu-action@v3
         with:
-          platforms: arm64,arm/v7
+          platforms: arm64
 
       - name: Configurer Docker Buildx
         uses: docker/setup-buildx-action@v3
@@ -125,7 +125,6 @@ jobs:
           mkdir -p binaries-docker
           cp binaries/github-ntfy-amd64/github-ntfy-amd64 binaries-docker/
           cp binaries/github-ntfy-arm64/github-ntfy-arm64 binaries-docker/
-          cp binaries/github-ntfy-armv7/github-ntfy-armv7 binaries-docker/
           chmod +x binaries-docker/*
           ls -la binaries-docker/
 
@@ -135,7 +134,7 @@ jobs:
         with:
           context: .
           push: true
-          platforms: linux/amd64,linux/arm64,linux/arm/v7
+          platforms: linux/amd64,linux/arm64
           tags: |
             ${{ secrets.DOCKER_USERNAME }}/github-ntfy:latest
             ${{ secrets.DOCKER_USERNAME }}/github-ntfy:${{ needs.version.outputs.version }}
@@ -161,7 +160,6 @@ jobs:
           files: |
             binaries/github-ntfy-amd64/github-ntfy-amd64
             binaries/github-ntfy-arm64/github-ntfy-arm64
-            binaries/github-ntfy-armv7/github-ntfy-armv7
           draft: false
           prerelease: false
           generate_release_notes: true
