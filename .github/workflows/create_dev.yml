@@ -63,7 +63,7 @@ jobs:
           path: release/${{ matrix.name }}
 
   docker-build-push:
-    needs: [ version, build-binaries ]
+    needs: [ build-binaries ]
     runs-on: ubuntu-latest
     steps:
       - name: Checkout code
