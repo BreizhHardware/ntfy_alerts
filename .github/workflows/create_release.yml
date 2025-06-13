@@ -40,15 +40,6 @@ jobs:
   build-binaries:
     needs: version
     runs-on: ubuntu-latest
-    strategy:
-      matrix:
-        include:
-          - target: x86_64-unknown-linux-musl
-            platform: linux/amd64
-            name: github-ntfy-amd64
-          - target: aarch64-unknown-linux-musl
-            platform: linux/arm64
-            name: github-ntfy-arm64
 
     steps:
       - name: Checkout code
@@ -58,13 +49,13 @@ jobs:
         uses: actions-rs/toolchain@v1
         with:
           toolchain: stable
-          target: ${{ matrix.target }}
+          target: x86_64-unknown-linux-musl
           override: true
 
       - name: Installer cross
         run: cargo install cross
 
-      - name: Créer Cross.toml pour spécifier OpenSSL statique
+      - name: Créer Cross.toml pour spécifier OpenSSL vendored
         run: |
           cat > Cross.toml << 'EOF'
           [build.env]
@@ -75,24 +66,24 @@ jobs:
           ]
           EOF
 
-      - name: Construire avec cross
+      - name: Construire avec cross et OpenSSL vendored
         env:
           OPENSSL_STATIC: 1
           RUSTFLAGS: "-C target-feature=+crt-static"
           OPENSSL_NO_VENDOR: 0
         run: |
-          cross build --release --target ${{ matrix.target }} --features vendored-openssl
+          cross build --release --target x86_64-unknown-linux-musl --features vendored-openssl
 
       - name: Préparer le binaire
         run: |
           mkdir -p release
-          cp target/${{ matrix.target }}/release/github-ntfy release/${{ matrix.name }}
+          cp target/x86_64-unknown-linux-musl/release/github-ntfy release/github-ntfy
 
       - name: Upload binaire comme artifact
         uses: actions/upload-artifact@v4
         with:
-          name: ${{ matrix.name }}
-          path: release/${{ matrix.name }}
+          name: github-ntfy
+          path: release/github-ntfy
 
   docker-build-push:
     needs: [version, build-binaries]
@@ -100,11 +91,6 @@ jobs:
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
-
-      - name: Configurer QEMU
-        uses: docker/setup-qemu-action@v3
-        with:
-          platforms: arm64
 
       - name: Configurer Docker Buildx
         uses: docker/setup-buildx-action@v3
@@ -118,27 +104,23 @@ jobs:
       - name: Télécharger tous les binaires
         uses: actions/download-artifact@v4
         with:
+          name: github-ntfy
           path: binaries
 
-      - name: Préparer les binaires pour Docker
+      - name: Préparer le binaire pour Docker
         run: |
-          mkdir -p binaries-docker
-          cp binaries/github-ntfy-amd64/github-ntfy-amd64 binaries-docker/
-          cp binaries/github-ntfy-arm64/github-ntfy-arm64 binaries-docker/
-          chmod +x binaries-docker/*
-          ls -la binaries-docker/
+          chmod +x binaries/github-ntfy
 
       # Construire et pousser l'image multi-architecture
-      - name: Construire et pousser l'image Docker multi-architecture
+      - name: Construire et pousser l'image Docker
         uses: docker/build-push-action@v6
         with:
           context: .
           push: true
-          platforms: linux/amd64,linux/arm64
           tags: |
             breizhhardware/github-ntfy:latest
             breizhhardware/github-ntfy:${{ needs.version.outputs.version }}
-          file: Dockerfile.multi
+          file: Dockerfile
 
   create-release:
     needs: [version, build-binaries]
@@ -150,6 +132,7 @@ jobs:
       - name: Télécharger tous les binaires
         uses: actions/download-artifact@v4
         with:
+          name: github-ntfy
           path: binaries
 
       - name: Créer une release GitHub
@@ -158,8 +141,7 @@ jobs:
           tag_name: ${{ needs.version.outputs.version }}
           name: Release ${{ needs.version.outputs.version }}
           files: |
-            binaries/github-ntfy-amd64/github-ntfy-amd64
-            binaries/github-ntfy-arm64/github-ntfy-arm64
+            binaries/github-ntfy
           draft: false
           prerelease: false
           generate_release_notes: true

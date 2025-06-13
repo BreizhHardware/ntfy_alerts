@@ -6,18 +6,8 @@ on:
       - dev
 
 jobs:
-  build-binaries:
+  build-binary:
     runs-on: ubuntu-latest
-    strategy:
-      matrix:
-        include:
-          - target: x86_64-unknown-linux-musl
-            platform: linux/amd64
-            name: github-ntfy-amd64
-          - target: aarch64-unknown-linux-musl
-            platform: linux/arm64
-            name: github-ntfy-arm64
-
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
@@ -26,7 +16,7 @@ jobs:
         uses: actions-rs/toolchain@v1
         with:
           toolchain: stable
-          target: ${{ matrix.target }}
+          target: x86_64-unknown-linux-musl
           override: true
 
       - name: Installer cross
@@ -49,32 +39,27 @@ jobs:
           RUSTFLAGS: "-C target-feature=+crt-static"
           OPENSSL_NO_VENDOR: 0
         run: |
-          cross build --release --target ${{ matrix.target }} --features vendored-openssl
+          cross build --release --target x86_64-unknown-linux-musl --features vendored-openssl
 
       - name: Préparer le binaire
         run: |
           mkdir -p release
-          cp target/${{ matrix.target }}/release/github-ntfy release/${{ matrix.name }}
+          cp target/x86_64-unknown-linux-musl/release/github-ntfy release/github-ntfy
 
       - name: Upload binaire comme artifact
         uses: actions/upload-artifact@v4
         with:
-          name: ${{ matrix.name }}
-          path: release/${{ matrix.name }}
+          name: github-ntfy
+          path: release/github-ntfy
 
   docker-build-push:
-    needs: [ build-binaries ]
+    needs: [build-binary]
     runs-on: ubuntu-latest
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
 
-      - name: Configurer QEMU
-        uses: docker/setup-qemu-action@v3
-        with:
-          platforms: arm64
-
-      - name: Configurer Docker Buildx
+      - name: Configurer Docker
         uses: docker/setup-buildx-action@v3
 
       - name: Login Docker Hub
@@ -83,60 +68,20 @@ jobs:
           username: ${{ secrets.DOCKER_USERNAME }}
           password: ${{ secrets.DOCKER_PASSWORD }}
 
-      - name: Télécharger tous les binaires
+      - name: Télécharger le binaire
         uses: actions/download-artifact@v4
         with:
+          name: github-ntfy
           path: binaries
 
-      - name: Préparer les binaires pour Docker
+      - name: Préparer le binaire pour Docker
         run: |
-          mkdir -p binaries-docker
-          cp binaries/github-ntfy-amd64/github-ntfy-amd64 binaries-docker/
-          cp binaries/github-ntfy-arm64/github-ntfy-arm64 binaries-docker/
-          chmod +x binaries-docker/*
+          chmod +x binaries/github-ntfy
 
-      - name: Créer Dockerfile spécifique pour chaque architecture
-        run: |
-          # Créer un Dockerfile séparé pour chaque architecture
-          cat > Dockerfile.multi << 'EOF'
-          FROM --platform=${TARGETPLATFORM} alpine:3.22
-
-          ARG TARGETPLATFORM
-          ARG TARGETARCH
-          ARG TARGETVARIANT
-
-          # Copier le binaire approprié selon l'architecture
-          COPY binaries-docker/github-ntfy-amd64 /usr/local/bin/github-ntfy-amd64
-          COPY binaries-docker/github-ntfy-arm64 /usr/local/bin/github-ntfy-arm64
-
-          # Installer des outils pour débogage et déplacer le bon binaire
-          RUN apk add --no-cache sqlite-libs openssl nginx && \
-              if [ "$TARGETARCH" = "amd64" ]; then \
-                cp /usr/local/bin/github-ntfy-amd64 /usr/local/bin/github-ntfy; \
-              elif [ "$TARGETARCH" = "arm64" ]; then \
-                cp /usr/local/bin/github-ntfy-arm64 /usr/local/bin/github-ntfy; \
-              fi && \
-              chmod +x /usr/local/bin/github-ntfy && \
-              rm /usr/local/bin/github-ntfy-*
-
-          WORKDIR /app
-          COPY web /app/web
-          COPY config.toml /app/config.toml
-
-          ENV DB_PATH=/data
-          VOLUME /data
-          EXPOSE 8080
-
-          ENTRYPOINT ["/usr/local/bin/github-ntfy"]
-          CMD ["--config", "/app/config.toml"]
-          EOF
-
-      - name: Construire et pousser l'image Docker multi-architecture
+      - name: Construire et pousser l'image Docker
         uses: docker/build-push-action@v6
         with:
           context: .
           push: true
-          platforms: linux/amd64,linux/arm64
-          tags: |
-            breizhhardware/github-ntfy:dev
-          file: Dockerfile.multi
+          tags: breizhhardware/github-ntfy:dev
+          file: Dockerfile

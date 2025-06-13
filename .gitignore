@@ -410,3 +410,6 @@ github-ntfy/*
 # Rust
 target
 target/*
+
+binaries
+binaries/*
