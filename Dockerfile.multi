@@ -1,33 +1,33 @@
-FROM alpine:3.22
+FROM alpine:3.22 AS base
 
-# Installer les dépendances nécessaires
-RUN apk add --no-cache sqlite-libs openssl nginx
+# Copier les binaires précompilés selon l'architecture
+COPY binaries-docker/github-ntfy-amd64 /usr/local/bin/github-ntfy-amd64
+COPY binaries-docker/github-ntfy-arm64 /usr/local/bin/github-ntfy-arm64
 
-# Copier les fichiers web statiques
+# Installation des dépendances et configuration du binaire selon l'architecture
+RUN apk add --no-cache sqlite-libs openssl nginx && \
+    if [ "$(uname -m)" = "x86_64" ]; then \
+      cp /usr/local/bin/github-ntfy-amd64 /usr/local/bin/github-ntfy; \
+    elif [ "$(uname -m)" = "aarch64" ]; then \
+      cp /usr/local/bin/github-ntfy-arm64 /usr/local/bin/github-ntfy; \
+    fi && \
+    chmod +x /usr/local/bin/github-ntfy && \
+    rm /usr/local/bin/github-ntfy-*
+
+WORKDIR /app
+
+# Copier les fichiers statiques
 COPY index.html /var/www/html/index.html
 COPY script.js /var/www/html/script.js
-
-# Copier les binaires compilés en fonction de l'architecture
-ARG TARGETARCH
-ARG TARGETVARIANT
-COPY binaries-docker/github-ntfy-${TARGETARCH}${TARGETVARIANT} /usr/local/bin/github-ntfy
-
-# Corriger pour arm/v7
-RUN if [ -f /usr/local/bin/github-ntfyv7 ]; then \
-        mv /usr/local/bin/github-ntfyv7 /usr/local/bin/github-ntfy; \
-    fi
-
-# Rendre le binaire exécutable
-RUN chmod +x /usr/local/bin/github-ntfy
 
 # Copier la configuration nginx
 COPY nginx.conf /etc/nginx/nginx.conf
 
-# Copier et rendre exécutable le script d'entrée
+# Copier le script d'entrée
 COPY entrypoint.sh /
 RUN chmod 700 /entrypoint.sh
 
-# Définir les variables d'environnement
+# Variables d'environnement
 ENV USERNAME="" \
     PASSWORD="" \
     NTFY_URL="" \
@@ -38,13 +38,10 @@ ENV USERNAME="" \
     GOTIFY_URL="" \
     GOTIFY_TOKEN="" \
     DISCORD_WEBHOOK_URL="" \
-    SLACK_WEBHOOK_URL="" \
-    DB_PATH="/data"
+    SLACK_WEBHOOK_URL=""
 
-# Créer le répertoire des données
-RUN mkdir -p /data && chmod 755 /data
+RUN mkdir -p /github-ntfy && chmod 755 /github-ntfy
 
-# Exposer les ports pour l'API et le serveur web
 EXPOSE 8080 80
 
 ENTRYPOINT ["/entrypoint.sh"]
