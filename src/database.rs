@@ -1,5 +1,5 @@
 use log::info;
-use rusqlite::{Connection, Result as SqliteResult, OpenFlags};
+pub(crate) use rusqlite::{Connection, Result as SqliteResult, OpenFlags};
 use std::env;
 use std::path::Path;
 
@@ -78,4 +78,26 @@ pub fn get_docker_watched_repos(conn: &Connection) -> SqliteResult<Vec<String>> 
         repos.push(repo?);
     }
     Ok(repos)
+}
+
+pub fn is_new_version(conn: &Connection, repo: &str, version: &str) -> SqliteResult<bool> {
+    let mut stmt = conn.prepare("SELECT version FROM versions WHERE repo = ?")?;
+    let result = stmt.query_map([repo], |row| row.get::<_, String>(0))?;
+
+    for stored_version in result {
+        if let Ok(v) = stored_version {
+            return Ok(v != version);
+        }
+    }
+
+    Ok(true)
+}
+
+pub fn update_version(conn: &Connection, repo: &str, version: &str, changelog: Option<&str>) -> SqliteResult<()> {
+    conn.execute(
+        "REPLACE INTO versions (repo, version, changelog) VALUES (?, ?, ?)",
+        [repo, version, changelog.unwrap_or("")],
+    )?;
+
+    Ok(())
 }

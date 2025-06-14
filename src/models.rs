@@ -34,3 +34,9 @@ pub struct DockerReleaseInfo {
     pub html_url: String,
     pub published_at: String,
 }
+
+pub struct NotifiedRelease {
+    pub repo: String,
+    pub tag_name: String,
+    pub notified_at: chrono::DateTime<chrono::Utc>,
+}
