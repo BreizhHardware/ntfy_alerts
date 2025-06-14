@@ -1,16 +1,26 @@
-use log::error;
+use log::{error, info};
 use reqwest::header::HeaderMap;
 use crate::models::{GithubRelease, GithubReleaseInfo};
 
 pub async fn get_latest_releases(
     repos: &[String],
     client: &reqwest::Client,
-    headers: HeaderMap,
+    mut headers: HeaderMap
 ) -> Vec<GithubReleaseInfo> {
     let mut releases = Vec::new();
 
+    if !headers.contains_key("User-Agent") {
+        headers.insert("User-Agent", "github-ntfy/1.0".parse().unwrap());
+    }
+
+    let has_auth = headers.contains_key("Authorization");
+    if !has_auth {
+        info!("Aucun token GitHub configuré, les requêtes seront limitées");
+    }
+
     for repo in repos {
         let url = format!("https://api.github.com/repos/{}/releases/latest", repo);
+
         match client.get(&url).headers(headers.clone()).send().await {
             Ok(response) => {
                 if response.status().is_success() {
@@ -27,11 +37,14 @@ pub async fn get_latest_releases(
                         });
                     }
                 } else {
-                    error!("Error fetching GitHub release for {}: {}", repo, response.status());
+                    let status = response.status();
+                    let body = response.text().await.unwrap_or_default();
+                    error!("Erreur lors de la récupération de la release GitHub pour {}: {} - {}",
+                           repo, status, body);
                 }
-            }
+            },
             Err(e) => {
-                error!("Error fetching GitHub release for {}: {}", repo, e);
+                error!("Erreur de connexion pour {}: {}", repo, e);
             }
         }
     }
