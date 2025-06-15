@@ -59,8 +59,8 @@ pub fn init_databases() -> SqliteResult<(Connection, Connection)> {
 
 // Functions to retrieve watched repositories
 pub fn get_watched_repos(conn: &Connection) -> SqliteResult<Vec<String>> {
-    let mut stmt = conn.prepare("SELECT * FROM watched_repos")?;
-    let repos_iter = stmt.query_map([], |row| Ok(row.get::<_, String>(1)?))?;
+    let mut stmt = conn.prepare("SELECT repo FROM watched_repos")?;
+    let repos_iter = stmt.query_map([], |row| Ok(row.get::<_, String>(0)?))?;
 
     let mut repos = Vec::new();
     for repo in repos_iter {
