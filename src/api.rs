@@ -16,7 +16,7 @@ struct RepoRequest {
 
 pub async fn start_api() -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
     // Open the database
-    let db_path = env::var("DB_PATH").unwrap_or_else(|_| "./data".to_string());
+    let db_path = env::var("DB_PATH").unwrap_or_else(|_| "/github-ntfy".to_string());
     std::fs::create_dir_all(&db_path).ok();
     let repos_path = format!("{}/watched_repos.db", db_path);
 
