@@ -1,5 +1,5 @@
 use dotenv::dotenv;
-use reqwest::header::{HeaderMap, HeaderValue, AUTHORIZATION, CONTENT_TYPE};
+use reqwest::header::{HeaderMap, HeaderValue, AUTHORIZATION};
 use std::env;
 use std::fs::File;
 use std::io::Read;
