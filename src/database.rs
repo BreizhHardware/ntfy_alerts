@@ -70,8 +70,8 @@ pub fn get_watched_repos(conn: &Connection) -> SqliteResult<Vec<String>> {
 }
 
 pub fn get_docker_watched_repos(conn: &Connection) -> SqliteResult<Vec<String>> {
-    let mut stmt = conn.prepare("SELECT * FROM docker_watched_repos")?;
-    let repos_iter = stmt.query_map([], |row| Ok(row.get::<_, String>(1)?))?;
+    let mut stmt = conn.prepare("SELECT repo FROM docker_watched_repos")?;
+    let repos_iter = stmt.query_map([], |row| Ok(row.get::<_, String>(0)?))?;
 
     let mut repos = Vec::new();
     for repo in repos_iter {
