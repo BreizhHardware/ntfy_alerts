@@ -118,7 +118,7 @@ async fn add_github_repo(body: RepoRequest, db: Arc<Mutex<Connection>>) -> Resul
         Err(e) => {
             error!("Error while checking repository: {}", e);
             return Ok(warp::reply::with_status(
-                warp::reply::json(&json!({"error": format!("Database error: {}", e)})),
+                warp::reply::json(&json!({"error": "An internal server error occurred."})),
                 StatusCode::INTERNAL_SERVER_ERROR
             ));
         },
