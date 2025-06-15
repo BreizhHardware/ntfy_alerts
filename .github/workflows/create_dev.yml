@@ -1,0 +1,87 @@
+name: Build et Push Docker Dev Image
+
+on:
+  push:
+    branches:
+      - dev
+
+jobs:
+  build-binary:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Installer Rust
+        uses: actions-rs/toolchain@v1
+        with:
+          toolchain: stable
+          target: x86_64-unknown-linux-musl
+          override: true
+
+      - name: Installer cross
+        run: cargo install cross
+
+      - name: Créer Cross.toml pour spécifier OpenSSL vendored
+        run: |
+          cat > Cross.toml << 'EOF'
+          [build.env]
+          passthrough = [
+            "RUSTFLAGS",
+            "OPENSSL_STATIC",
+            "OPENSSL_NO_VENDOR"
+          ]
+          EOF
+
+      - name: Construire avec cross et OpenSSL vendored
+        env:
+          OPENSSL_STATIC: 1
+          RUSTFLAGS: "-C target-feature=+crt-static"
+          OPENSSL_NO_VENDOR: 0
+        run: |
+          cross build --release --target x86_64-unknown-linux-musl --features vendored-openssl
+
+      - name: Préparer le binaire
+        run: |
+          mkdir -p release
+          cp target/x86_64-unknown-linux-musl/release/github-ntfy release/github-ntfy
+
+      - name: Upload binaire comme artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: github-ntfy
+          path: release/github-ntfy
+
+  docker-build-push:
+    needs: [build-binary]
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Configurer Docker
+        uses: docker/setup-buildx-action@v3
+
+      - name: Login Docker Hub
+        uses: docker/login-action@v3
+        with:
+          username: ${{ secrets.DOCKER_USERNAME }}
+          password: ${{ secrets.DOCKER_PASSWORD }}
+
+      - name: Télécharger le binaire
+        uses: actions/download-artifact@v4
+        with:
+          name: github-ntfy
+          path: binaries
+
+      - name: Préparer le binaire pour Docker
+        run: |
+          chmod +x binaries/github-ntfy
+
+      - name: Construire et pousser l'image Docker
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          push: true
+          tags: breizhhardware/github-ntfy:dev
+          file: Dockerfile

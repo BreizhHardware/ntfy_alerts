@@ -6,5 +6,5 @@ echo -n "$USERNAME:$PASSWORD" | base64 > /auth.txt
 # Démarrer nginx en arrière-plan
 nginx -g 'daemon off;' &
 
-# Exécute le script Python
-exec python ./ntfy.py
+# Exécute l'application Rust
+exec /usr/local/bin/github-ntfy
