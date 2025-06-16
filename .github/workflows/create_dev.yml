@@ -7,6 +7,7 @@ on:
 
 jobs:
   build-binary:
+    if: ${{ github.actor != 'dependabot[bot]' && !startsWith(github.ref, 'refs/heads/dependabot/') }}
     runs-on: ubuntu-latest
     steps:
       - name: Checkout code
@@ -53,6 +54,7 @@ jobs:
           path: release/github-ntfy
 
   docker-build-push:
+    if: ${{ github.actor != 'dependabot[bot]' && !startsWith(github.ref, 'refs/heads/dependabot/') }}
     needs: [build-binary]
     runs-on: ubuntu-latest
     steps:
