@@ -1,4 +1,4 @@
-name: Build et Release Multi-Architectures
+name: Build et Release
 
 on:
   push:
@@ -119,6 +119,7 @@ jobs:
           push: true
           tags: |
             breizhhardware/github-ntfy:latest
+            breizhhardware/github-ntfy:dev
             breizhhardware/github-ntfy:${{ needs.version.outputs.version }}
           file: Dockerfile
 
