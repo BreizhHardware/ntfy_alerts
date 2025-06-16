@@ -15,7 +15,7 @@
 
 ### Docker (recommended)
 
-Use our multi-architecture Docker image, which automatically supports amd64, arm64 and armv7:
+Use our Docker image, which automatically supports amd64, arm64 and armv7:
 
 ```yaml
 services:
@@ -34,7 +34,6 @@ services:
       - GOTIFY_TOKEN= # Required if gotify is used
       - DISCORD_WEBHOOK_URL= # Required if discord is used
       - SLACK_WEBHOOK_URL= # Required if Slack is used
-      - DB_PATH=/data # Database path
     volumes:
       - /path/to/data:/data
     ports:
@@ -64,38 +63,18 @@ Run
 ./target/release/github-ntfy
 ```
 
-## REST API
-The application exposes a REST API on port 8080 to manage watched repositories:
-
-
-Endpoint
-Method
-Description
-/app_repo
-POST
-Add a GitHub repository to watch
-/app_docker_repo
-POST
-Add a Docker repository to watch
-/watched_repos
-GET
-List all watched GitHub repositories
-/watched_docker_repos
-GET
-List all watched Docker repositories
-/delete_repo
-POST
-Delete a GitHub repository
-/delete_docker_repo
-POST
-Delete a Docker repository
-
 ## Version Notes
 - v2.0: Complete rewrite in Rust for better performance and reduced resource consumption
-- v1.5: Stable Python version
+- [v1.7.1](https://github.com/BreizhHardware/ntfy_alerts/tree/v1.7.2): Stable Python version
 
 ## Configuration
 The GitHub token (GHNTFY_TOKEN) needs to have the following permissions: repo, read:org and read:user.
+
+## TODO
+- [ ] Add support for multi achitecture Docker images
+- [ ] Rework web interface
+- [ ] Add support for more notification services (Telegram, Matrix, etc.)
+- [ ] Add web oneboarding instead of using environment variables
 
 ## Author
 👤 BreizhHardware
