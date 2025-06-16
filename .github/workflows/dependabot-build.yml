@@ -10,7 +10,7 @@ permissions:
 
 jobs:
   build:
-    if: ${{ startsWith(github.head_ref, 'dependabot/') || github.actor == 'dependabot[bot]' }}
+    if: ${{ startsWith(github.ref, 'refs/heads/dependabot/') || github.actor == 'dependabot[bot]' }}
     runs-on: ubuntu-latest
     steps:
       - name: Checkout code
