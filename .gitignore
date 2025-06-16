@@ -406,3 +406,10 @@ github-ntfy/
 github-ntfy/*
 
 *.db
+
+# Rust
+target
+target/*
+
+binaries
+binaries/*

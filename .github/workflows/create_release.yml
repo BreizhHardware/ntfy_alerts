@@ -1,4 +1,4 @@
-name: Docker Build and Release
+name: Build et Release
 
 on:
   push:
@@ -6,25 +6,145 @@ on:
       - main
 
 jobs:
-  build-and-push-on-docker-hub:
+  version:
+    runs-on: ubuntu-latest
+    outputs:
+      version: ${{ steps.version.outputs.tag }}
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Calculer la prochaine version
+        id: version
+        run: |
+          # Récupérer la dernière version ou utiliser v0.1.0 si aucune n'existe
+          LATEST_TAG=$(git describe --tags --abbrev=0 2>/dev/null || echo "v0.1.0")
+          echo "Dernière version: $LATEST_TAG"
+          
+          # Extraire les composants de version
+          VERSION=${LATEST_TAG#v}
+          MAJOR=$(echo $VERSION | cut -d. -f1)
+          MINOR=$(echo $VERSION | cut -d. -f2)
+          PATCH=$(echo $VERSION | cut -d. -f3)
+          
+          # Incrémenter le patch
+          PATCH=$((PATCH + 1))
+          
+          # Nouvelle version
+          NEW_VERSION="v$MAJOR.$MINOR.$PATCH"
+          echo "Nouvelle version: $NEW_VERSION"
+          echo "tag=$NEW_VERSION" >> $GITHUB_OUTPUT
+
+  build-binaries:
+    needs: version
     runs-on: ubuntu-latest
 
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
 
-      - name: Set up Docker Buildx
+      - name: Installer Rust
+        uses: actions-rs/toolchain@v1
+        with:
+          toolchain: stable
+          target: x86_64-unknown-linux-musl
+          override: true
+
+      - name: Installer cross
+        run: cargo install cross
+
+      - name: Créer Cross.toml pour spécifier OpenSSL vendored
+        run: |
+          cat > Cross.toml << 'EOF'
+          [build.env]
+          passthrough = [
+            "RUSTFLAGS",
+            "OPENSSL_STATIC",
+            "OPENSSL_NO_VENDOR"
+          ]
+          EOF
+
+      - name: Construire avec cross et OpenSSL vendored
+        env:
+          OPENSSL_STATIC: 1
+          RUSTFLAGS: "-C target-feature=+crt-static"
+          OPENSSL_NO_VENDOR: 0
+        run: |
+          cross build --release --target x86_64-unknown-linux-musl --features vendored-openssl
+
+      - name: Préparer le binaire
+        run: |
+          mkdir -p release
+          cp target/x86_64-unknown-linux-musl/release/github-ntfy release/github-ntfy
+
+      - name: Upload binaire comme artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: github-ntfy
+          path: release/github-ntfy
+
+  docker-build-push:
+    needs: [version, build-binaries]
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Configurer Docker Buildx
         uses: docker/setup-buildx-action@v3
 
-      - name: Log in to Docker Hub
+      - name: Login Docker Hub
         uses: docker/login-action@v3
         with:
           username: ${{ secrets.DOCKER_USERNAME }}
           password: ${{ secrets.DOCKER_PASSWORD }}
 
-      - name: Build and push Docker image
+      - name: Télécharger tous les binaires
+        uses: actions/download-artifact@v4
+        with:
+          name: github-ntfy
+          path: binaries
+
+      - name: Préparer le binaire pour Docker
+        run: |
+          chmod +x binaries/github-ntfy
+
+      # Construire et pousser l'image multi-architecture
+      - name: Construire et pousser l'image Docker
         uses: docker/build-push-action@v6
         with:
           context: .
           push: true
-          tags: ${{ secrets.DOCKER_USERNAME }}/github-ntfy:latest
+          tags: |
+            breizhhardware/github-ntfy:latest
+            breizhhardware/github-ntfy:dev
+            breizhhardware/github-ntfy:${{ needs.version.outputs.version }}
+          file: Dockerfile
+
+  create-release:
+    needs: [version, build-binaries]
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Télécharger tous les binaires
+        uses: actions/download-artifact@v4
+        with:
+          name: github-ntfy
+          path: binaries
+
+      - name: Créer une release GitHub
+        uses: softprops/action-gh-release@v1
+        with:
+          tag_name: ${{ needs.version.outputs.version }}
+          name: Release ${{ needs.version.outputs.version }}
+          files: |
+            binaries/github-ntfy
+          draft: false
+          prerelease: false
+          generate_release_notes: true
+        env:
+          GITHUB_TOKEN: ${{ secrets.TOKEN }}

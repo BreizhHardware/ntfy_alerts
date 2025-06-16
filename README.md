@@ -1,6 +1,6 @@
 <h1 align="center">Welcome to ntfy_alerts 👋</h1>
 <p>
-  <img alt="Version" src="https://img.shields.io/badge/version-1.5-blue.svg?cacheSeconds=2592000" />
+  <img alt="Version" src="https://img.shields.io/badge/version-2.0-blue.svg?cacheSeconds=2592000" />
   <a href="#" target="_blank">
     <img alt="License: GPL--3" src="https://img.shields.io/badge/License-GPL--3-yellow.svg" />
   </a>
@@ -9,19 +9,15 @@
   </a>
 </p>
 
-> This project allows you to receive notifications about new GitHub or Docker Hub releases on ntfy, gotify, and Discord.
+> This project allows you to receive notifications about new GitHub or Docker Hub releases on ntfy, gotify, Discord and Slack. Implemented in Rust for better performance.
 
 ## Installation
 
-To install the dependencies, run:
-```sh
-pip install -r requirements.txt
-```
+### Docker (recommended)
 
-## Usage
+Use our Docker image, which automatically supports amd64, arm64 and armv7:
 
-If you want to use the Docker image, you can use the following docker-compose file for x86_64:
-````yaml
+```yaml
 services:
   github-ntfy:
     image: breizhhardware/github-ntfy:latest
@@ -39,85 +35,58 @@ services:
       - DISCORD_WEBHOOK_URL= # Required if discord is used
       - SLACK_WEBHOOK_URL= # Required if Slack is used
     volumes:
-      - /path/to/github-ntfy:/github-ntfy/
+      - /path/to/data:/data
     ports:
       - 80:80
     restart: unless-stopped
-````
-For arm64 this docker compose file is ok:
-````yaml
-services:
-  github-ntfy:
-    image: breizhhardware/github-ntfy:arm64
-    container_name: github-ntfy
-    environment:
-      - USERNAME=username # Required
-      - PASSWORD=password # Required
-      - NTFY_URL=ntfy_url # Required if ntfy is used
-      - GHNTFY_TIMEOUT=timeout # Default is 3600 (1 hour)
-      - GHNTFY_TOKEN= # Default is empty (Github token)
-      - DOCKER_USERNAME= # Default is empty (Docker Hub username)
-      - DOCKER_PASSWORD= # Default is empty (Docker Hub password)
-      - GOTIFY_URL=gotify_url # Required if gotify is used
-      - GOTIFY_TOKEN= # Required if gotify is used
-      - DISCORD_WEBHOOK_URL= # Required if discord is used
-      - SLACK_WEBHOOK_URL= # Required if Slack is used
-    volumes:
-      - /path/to/github-ntfy:/github-ntfy/
-    ports:
-      - 80:80
-    restart: unless-stopped
-````
-For armV7 this docker compose is ok:
-````yaml
-services:
-  github-ntfy:
-    image: breizhhardware/github-ntfy:armv7
-    container_name: github-ntfy
-    environment:
-      - USERNAME=username # Required
-      - PASSWORD=password # Required
-      - NTFY_URL=ntfy_url # Required if ntfy is used
-      - GHNTFY_TIMEOUT=timeout # Default is 3600 (1 hour)
-      - GHNTFY_TOKEN= # Default is empty (Github token)
-      - DOCKER_USERNAME= # Default is empty (Docker Hub username)
-      - DOCKER_PASSWORD= # Default is empty (Docker Hub password)
-      - GOTIFY_URL=gotify_url # Required if gotify is used
-      - GOTIFY_TOKEN= # Required if gotify is used
-      - DISCORD_WEBHOOK_URL= # Required if discord is used
-      - SLACK_WEBHOOK_URL= # Required if Slack is used
-    volumes:
-      - /path/to/github-ntfy:/github-ntfy/
-    ports:
-      - 80:80
-    restart: unless-stopped
-````
-GHNTFY_TOKEN is a github token, it need to have repo, read:org and read:user
+```
+
+### Manual Installation
+Install Rust if needed
+```BASH
+curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh
+```
+
+Clone the repository
+```BASH
+git clone https://github.com/BreizhHardware/ntfy_alerts.git
+cd ntfy_alerts
+```
+
+Compile
+```BASH
+cargo build --release
+```
+
+Run
+```BASH
+./target/release/github-ntfy
+```
+
+## Version Notes
+- v2.0: Complete rewrite in Rust for better performance and reduced resource consumption
+- [v1.7.1](https://github.com/BreizhHardware/ntfy_alerts/tree/v1.7.2): Stable Python version
+
+## Configuration
+The GitHub token (GHNTFY_TOKEN) needs to have the following permissions: repo, read:org and read:user.
+
+## TODO
+- [ ] Add support for multi achitecture Docker images
+- [ ] Rework web interface
+- [ ] Add support for more notification services (Telegram, Matrix, etc.)
+- [ ] Add web oneboarding instead of using environment variables
 
 ## Author
+👤 BreizhHardware
 
-👤 **BreizhHardware**
 
-* Website: https://mrqt.fr?ref=github
-* Twitter: [@BreizhHardware](https://twitter.com/BreizhHardware)
-* Github: [@BreizhHardware](https://github.com/BreizhHardware)
-* LinkedIn: [@félix-marquet-5071bb167](https://linkedin.com/in/félix-marquet-5071bb167)
+- Website: [https://mrqt.fr](https://mrqt.fr?ref=github)
+- Twitter: [@BreizhHardware](https://twitter.com/BreizhHardware)
+- Github: [@BreizhHardware](https://github.com/BreizhHardware)
+- LinkedIn: [@félix-marquet-5071bb167](https://linkedin.com/in/félix-marquet-5071bb167)
 
-## Contribution
-
-If you want to contribut, feel free to open a pull request, but first read the [contribution guide](CONTRIBUTION.md)!
-
-## TODO:
-- [x] Dockerize the ntfy.py
-- [x] Add the watched repos list as a parameter
-- [x] Add the application version as a database
-- [x] Add the watched repos list as a web interface
-- [x] Add Docker Hub compatibility
-- [ ] Rework of the web interface
-- [x] Compatibility with Gotify
-- [x] Compatibility with Discord Webhook
-- [x] Compatibility and distribution for arm64 and armv7
+## Contributing
+Contributions are what make the open-source community such an amazing place to learn, inspire, and create. Any contributions you make are **greatly appreciated**. But first, please read the [CONTRIBUTION.md](CONTRIBUTION.md) file.
 
 ## Show your support
-
 Give a ⭐️ if this project helped you!
