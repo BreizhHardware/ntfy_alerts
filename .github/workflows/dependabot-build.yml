@@ -1,0 +1,52 @@
+name: Dependabot Build Check
+
+on:
+  pull_request:
+    branches: [dev]
+
+permissions:
+  contents: read
+  pull-requests: read
+
+jobs:
+  build:
+    if: ${{ startsWith(github.ref, 'refs/heads/dependabot/') || github.actor == 'dependabot[bot]' }}
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Installer Rust
+        uses: actions-rs/toolchain@v1
+        with:
+          toolchain: stable
+          target: x86_64-unknown-linux-musl
+          override: true
+
+      - name: Installer cross
+        run: cargo install cross
+
+      - name: Créer Cross.toml pour spécifier OpenSSL vendored
+        run: |
+          cat > Cross.toml << 'EOF'
+          [build.env]
+          passthrough = [
+            "RUSTFLAGS",
+            "OPENSSL_STATIC",
+            "OPENSSL_NO_VENDOR"
+          ]
+          EOF
+
+      - name: Construire avec cross et OpenSSL vendored
+        env:
+          OPENSSL_STATIC: 1
+          RUSTFLAGS: "-C target-feature=+crt-static"
+          OPENSSL_NO_VENDOR: 0
+        run: |
+          cross build --release --target x86_64-unknown-linux-musl --features vendored-openssl
+
+      - name: Afficher des informations de débogage
+        run: |
+          echo "Acteur: ${{ github.actor }}"
+          echo "Référence de la branche: ${{ github.head_ref }}"
+          echo "Event name: ${{ github.event_name }}"
