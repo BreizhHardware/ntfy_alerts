@@ -8,10 +8,19 @@ use warp::{Filter, Reply, Rejection};
 use warp::http::StatusCode;
 use serde::{Serialize, Deserialize};
 use warp::cors::Cors;
+use chrono::{DateTime, Utc, NaiveDateTime};
 
 #[derive(Debug, Serialize, Deserialize)]
 struct RepoRequest {
     repo: String,
+}
+
+#[derive(Debug, Serialize, Deserialize)]
+struct UpdateInfo {
+    date: String,
+    repo: String,
+    version: String,
+    changelog: String,
 }
 
 pub async fn start_api() -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
@@ -60,6 +69,11 @@ pub async fn start_api() -> Result<(), Box<dyn std::error::Error + Send + Sync>>
                 .and(with_db(db.clone()))
                 .and_then(delete_docker_repo);
 
+            let get_updates = warp::path("latest_updates")
+                .and(warp::get())
+                .and(with_db(db.clone()))
+                .and_then(get_latest_updates);
+
             // Configure CORS
             let cors = warp::cors()
                 .allow_any_origin()
@@ -73,6 +87,7 @@ pub async fn start_api() -> Result<(), Box<dyn std::error::Error + Send + Sync>>
                 .or(get_docker)
                 .or(delete_github)
                 .or(delete_docker)
+                .or(get_updates)  
                 .with(cors);
 
             // Start the server
@@ -383,4 +398,86 @@ async fn delete_docker_repo(body: RepoRequest, db: Arc<Mutex<Connection>>) -> Re
             ))
         }
     }
+}
+
+async fn get_latest_updates(db: Arc<Mutex<Connection>>) -> Result<impl Reply, Rejection> {
+    let updates = {
+        let db_guard = db.lock().await;
+
+        let db_path = env::var("DB_PATH").unwrap_or_else(|_| "/github-ntfy".to_string());
+        let versions_path = format!("{}/ghntfy_versions.db", db_path);
+
+        match Connection::open(&versions_path) {
+            Ok(versions_db) => {
+                match versions_db.prepare("SELECT repo, version, changelog, datetime('now') as date FROM versions ORDER BY rowid DESC LIMIT 5") {
+                    Ok(mut stmt) => {
+                        let rows = match stmt.query_map([], |row| {
+                            Ok(UpdateInfo {
+                                repo: row.get(0)?,
+                                version: row.get(1)?,
+                                changelog: row.get(2)?,
+                                date: row.get(3)?, 
+                            })
+                        }) {
+                            Ok(rows) => rows,
+                            Err(e) => {
+                                error!("Error executing query: {}", e);
+                                return Ok(warp::reply::with_status(
+                                    warp::reply::json(&json!({"error": format!("Database error: {}", e)})),
+                                    StatusCode::INTERNAL_SERVER_ERROR
+                                ));
+                            }
+                        };
+
+                        let mut updates = Vec::new();
+                        for row in rows {
+                            if let Ok(update) = row {
+                                updates.push(update);
+                            }
+                        }
+
+                        if updates.is_empty() {
+                            vec![
+                                UpdateInfo {
+                                    date: "20 juin 2025".to_string(),
+                                    repo: "BreizhHardware/ntfy_alerts".to_string(),
+                                    version: "2.0.2".to_string(),
+                                    changelog: "- Aucune mise à jour trouvée dans la base de données\n- Ceci est une donnée d'exemple".to_string(),
+                                }
+                            ]
+                        } else {
+                            updates
+                        }
+                    },
+                    Err(e) => {
+                        error!("Error preparing query: {}", e);
+                        vec![
+                            UpdateInfo {
+                                date: "20 juin 2025".to_string(),
+                                repo: "Erreur".to_string(),
+                                version: "N/A".to_string(),
+                                changelog: format!("- Erreur lors de la préparation de la requête: {}", e),
+                            }
+                        ]
+                    }
+                }
+            },
+            Err(e) => {
+                error!("Error opening versions database: {}", e);
+                vec![
+                    UpdateInfo {
+                        date: "20 juin 2025".to_string(),
+                        repo: "Erreur".to_string(),
+                        version: "N/A".to_string(),
+                        changelog: format!("- Erreur lors de l'ouverture de la base de données: {}", e),
+                    }
+                ]
+            }
+        }
+    };
+
+    Ok(warp::reply::with_status(
+        warp::reply::json(&updates),
+        StatusCode::OK
+    ))
 }

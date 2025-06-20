@@ -85,8 +85,38 @@ jobs:
           name: github-ntfy
           path: release/github-ntfy
 
+  build-frontend:
+    needs: version
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Setup PNPM
+        uses: pnpm/action-setup@v2
+        with:
+          version: '10.x'
+          run_install: false
+
+      - name: Build Frontend (Nuxt)
+        run: |
+          cd web
+          pnpm install
+          pnpm generate
+
+      - name: Upload frontend comme artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: nuxt-frontend
+          path: web/.output
+
   docker-build-push:
-    needs: [version, build-binaries]
+    needs: [version, build-binaries, build-frontend]
     runs-on: ubuntu-latest
     steps:
       - name: Checkout code
@@ -101,40 +131,63 @@ jobs:
           username: ${{ secrets.DOCKER_USERNAME }}
           password: ${{ secrets.DOCKER_PASSWORD }}
 
-      - name: Télécharger tous les binaires
+      - name: Télécharger le binaire
         uses: actions/download-artifact@v4
         with:
           name: github-ntfy
           path: binaries
 
-      - name: Préparer le binaire pour Docker
+      - name: Télécharger le frontend
+        uses: actions/download-artifact@v4
+        with:
+          name: nuxt-frontend
+          path: web/.output
+
+      - name: Préparer les fichiers pour Docker
         run: |
           chmod +x binaries/github-ntfy
+          mkdir -p docker-build
+          cp binaries/github-ntfy docker-build/
+          cp -r web/.output docker-build/web
+          cp nginx.conf docker-build/
+          cp entrypoint.sh docker-build/
+          chmod +x docker-build/entrypoint.sh
 
       # Construire et pousser l'image multi-architecture
       - name: Construire et pousser l'image Docker
         uses: docker/build-push-action@v6
         with:
-          context: .
+          context: docker-build
           push: true
           tags: |
             breizhhardware/github-ntfy:latest
-            breizhhardware/github-ntfy:dev
             breizhhardware/github-ntfy:${{ needs.version.outputs.version }}
           file: Dockerfile
 
   create-release:
-    needs: [version, build-binaries]
+    needs: [version, build-binaries, build-frontend]
     runs-on: ubuntu-latest
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
 
-      - name: Télécharger tous les binaires
+      - name: Télécharger le binaire
         uses: actions/download-artifact@v4
         with:
           name: github-ntfy
           path: binaries
+
+      - name: Télécharger le frontend
+        uses: actions/download-artifact@v4
+        with:
+          name: nuxt-frontend
+          path: web/.output
+
+      - name: Préparer les fichiers pour la release
+        run: |
+          mkdir -p release-artifacts
+          cp binaries/github-ntfy release-artifacts/
+          tar -czf release-artifacts/frontend.tar.gz -C web/.output .
 
       - name: Créer une release GitHub
         uses: softprops/action-gh-release@v1
@@ -142,7 +195,8 @@ jobs:
           tag_name: ${{ needs.version.outputs.version }}
           name: Release ${{ needs.version.outputs.version }}
           files: |
-            binaries/github-ntfy
+            release-artifacts/github-ntfy
+            release-artifacts/frontend.tar.gz
           draft: false
           prerelease: false
           generate_release_notes: true
