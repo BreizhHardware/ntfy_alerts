@@ -10,7 +10,7 @@ RUN apk add --no-cache sqlite-libs openssl nginx nodejs npm && \
 WORKDIR /app
 
 # Copier les fichiers web dans le répertoire attendu par nginx
-COPY web /var/www/html/
+COPY web/.output /var/www/html/
 COPY nginx.conf /etc/nginx/nginx.conf
 
 # Copier le script d'entrée
