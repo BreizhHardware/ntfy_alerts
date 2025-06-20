@@ -15,11 +15,5 @@ export default defineNuxtConfig({
       '@tailwindcss/postcss': {},
       autoprefixer: {},
     },
-  },
-  ssr: false,
-  generate: {
-    exclude: [
-      /^\/api/ 
-    ]
   }
 })
