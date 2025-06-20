@@ -439,7 +439,7 @@ async fn get_latest_updates(db: Arc<Mutex<Connection>>) -> Result<impl Reply, Re
                         if updates.is_empty() {
                             vec![
                                 UpdateInfo {
-                                    date: "20 juin 2025".to_string(),
+                                    date: Utc::now().to_rfc3339(),
                                     repo: "BreizhHardware/ntfy_alerts".to_string(),
                                     version: "2.0.2".to_string(),
                                     changelog: "- Aucune mise à jour trouvée dans la base de données\n- Ceci est une donnée d'exemple".to_string(),
