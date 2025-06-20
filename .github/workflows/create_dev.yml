@@ -77,11 +77,15 @@ jobs:
           pnpm install
           pnpm generate
 
+      - name: Vérifier le contenu du répertoire output
+        run: |
+          ls -la web/.output || echo "Le répertoire .output n'existe pas!"
+
       - name: Upload frontend comme artifact
         uses: actions/upload-artifact@v4
         with:
           name: nuxt-frontend
-          path: web/.output
+          path: web
 
   docker-build-push:
     if: ${{ github.actor != 'dependabot[bot]' && !startsWith(github.ref, 'refs/heads/dependabot/') }}
