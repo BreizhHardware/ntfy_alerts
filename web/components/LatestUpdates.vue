@@ -7,34 +7,11 @@
     <div class="space-y-4">
       <UAccordion v-for="(update, index) in latestUpdates" :key="index" :items="[{
         label: `${update.date} - ${update.repo} - v${update.version}`,
-        slot: 'changelog-' + index,
         defaultOpen: index === 0
       }]">
-        <template #changelog-0>
-          <div class="p-4 bg-gray-700 rounded-md">
-            <div v-html="formatChangelog(update.changelog)"></div>
-          </div>
-        </template>
-        <template #changelog-1>
-          <div class="p-4 bg-gray-700 rounded-md">
-            <div v-html="formatChangelog(update.changelog)"></div>
-          </div>
-        </template>
-        <template #changelog-2>
-          <div class="p-4 bg-gray-700 rounded-md">
-            <div v-html="formatChangelog(update.changelog)"></div>
-          </div>
-        </template>
-        <template #changelog-3>
-          <div class="p-4 bg-gray-700 rounded-md">
-            <div v-html="formatChangelog(update.changelog)"></div>
-          </div>
-        </template>
-        <template #changelog-4>
-          <div class="p-4 bg-gray-700 rounded-md">
-            <div v-html="formatChangelog(update.changelog)"></div>
-          </div>
-        </template>
+        <div class="p-4 bg-gray-700 rounded-md">
+          <div v-html="formatChangelog(update.changelog)"></div>
+        </div>
       </UAccordion>
     </div>
   </UCard>
