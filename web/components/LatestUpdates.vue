@@ -1,7 +1,7 @@
 <template>
   <UCard class="bg-gray-800 shadow-lg mb-8">
     <template #header>
-      <h2 class="text-2xl font-semibold">Dernières mises à jour</h2>
+      <h2 class="text-2xl font-semibold">Latest Updates</h2>
     </template>
 
     <div class="space-y-4">
