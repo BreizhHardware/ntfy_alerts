@@ -453,7 +453,7 @@ async fn get_latest_updates(db: Arc<Mutex<Connection>>) -> Result<impl Reply, Re
                         error!("Error preparing query: {}", e);
                         vec![
                             UpdateInfo {
-                                date: "20 juin 2025".to_string(),
+                                date: Utc::now().to_rfc3339(),
                                 repo: "Erreur".to_string(),
                                 version: "N/A".to_string(),
                                 changelog: format!("- Erreur lors de la préparation de la requête: {}", e),
