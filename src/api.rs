@@ -8,7 +8,7 @@ use warp::{Filter, Reply, Rejection};
 use warp::http::StatusCode;
 use serde::{Serialize, Deserialize};
 use warp::cors::Cors;
-// Removed unused chrono imports
+use chrono::Utc;
 
 #[derive(Debug, Serialize, Deserialize)]
 struct RepoRequest {
@@ -466,7 +466,7 @@ async fn get_latest_updates(db: Arc<Mutex<Connection>>) -> Result<impl Reply, Re
                 error!("Error opening versions database: {}", e);
                 vec![
                     UpdateInfo {
-                        date: "20 juin 2025".to_string(),
+                        date: Utc::now().to_rfc3339(),
                         repo: "Erreur".to_string(),
                         version: "N/A".to_string(),
                         changelog: format!("- Erreur lors de l'ouverture de la base de données: {}", e),
