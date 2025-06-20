@@ -53,9 +53,39 @@ jobs:
           name: github-ntfy
           path: release/github-ntfy
 
+  build-frontend:
+    if: ${{ github.actor != 'dependabot[bot]' && !startsWith(github.ref, 'refs/heads/dependabot/') }}
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Setup PNPM
+        uses: pnpm/action-setup@v2
+        with:
+          version: '10.x'
+          run_install: false
+
+      - name: Build Frontend (Nuxt)
+        run: |
+          cd web
+          pnpm install
+          pnpm generate
+
+      - name: Upload frontend comme artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: nuxt-frontend
+          path: web/.output
+
   docker-build-push:
     if: ${{ github.actor != 'dependabot[bot]' && !startsWith(github.ref, 'refs/heads/dependabot/') }}
-    needs: [build-binary]
+    needs: [build-binary, build-frontend]
     runs-on: ubuntu-latest
     steps:
       - name: Checkout code
@@ -76,14 +106,26 @@ jobs:
           name: github-ntfy
           path: binaries
 
-      - name: Préparer le binaire pour Docker
+      - name: Télécharger le frontend
+        uses: actions/download-artifact@v4
+        with:
+          name: nuxt-frontend
+          path: web/.output
+
+      - name: Préparer les fichiers pour Docker
         run: |
           chmod +x binaries/github-ntfy
+          mkdir -p docker-build
+          cp binaries/github-ntfy docker-build/
+          cp -r web/.output docker-build/web
+          cp nginx.conf docker-build/
+          cp entrypoint.sh docker-build/
+          chmod +x docker-build/entrypoint.sh
 
       - name: Construire et pousser l'image Docker
         uses: docker/build-push-action@v6
         with:
-          context: .
+          context: docker-build
           push: true
           tags: breizhhardware/github-ntfy:dev
           file: Dockerfile

@@ -28,22 +28,35 @@ jobs:
 
       - name: Créer Cross.toml pour spécifier OpenSSL vendored
         run: |
-          cat > Cross.toml << 'EOF'
+          cat > Cross.toml << 'EOL'
+          [target.x86_64-unknown-linux-musl]
+          image = "ghcr.io/cross-rs/x86_64-unknown-linux-musl:main"
+
           [build.env]
           passthrough = [
-            "RUSTFLAGS",
-            "OPENSSL_STATIC",
-            "OPENSSL_NO_VENDOR"
+              "RUST_BACKTRACE",
           ]
-          EOF
+          EOL
 
-      - name: Construire avec cross et OpenSSL vendored
-        env:
-          OPENSSL_STATIC: 1
-          RUSTFLAGS: "-C target-feature=+crt-static"
-          OPENSSL_NO_VENDOR: 0
+      - name: Build Backend (Rust)
+        run: cross build --release --target x86_64-unknown-linux-musl
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Setup PNPM
+        uses: pnpm/action-setup@v2
+        with:
+          version: '10.x'
+          run_install: false
+
+      - name: Build Frontend (Nuxt)
         run: |
-          cross build --release --target x86_64-unknown-linux-musl --features vendored-openssl
+          cd web
+          pnpm install
+          pnpm build
 
       - name: Afficher des informations de débogage
         run: |
