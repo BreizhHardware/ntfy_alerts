@@ -85,7 +85,7 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: nuxt-frontend
-          path: web
+          path: web/.output  # Uniquement télécharger le répertoire .output
 
   docker-build-push:
     if: ${{ github.actor != 'dependabot[bot]' && !startsWith(github.ref, 'refs/heads/dependabot/') }}
@@ -121,9 +121,10 @@ jobs:
           chmod +x binaries/github-ntfy
           mkdir -p docker-build
           cp binaries/github-ntfy docker-build/
-          cp -r web/.output docker-build/web
+          cp -r web/.output docker-build/web-output
           cp nginx.conf docker-build/
           cp entrypoint.sh docker-build/
+          cp Dockerfile docker-build/
           chmod +x docker-build/entrypoint.sh
 
       - name: Construire et pousser l'image Docker
@@ -131,5 +132,5 @@ jobs:
         with:
           context: docker-build
           push: true
-          tags: breizhhardware/github-ntfy:dev
-          file: Dockerfile
+          tags: ${{ secrets.DOCKER_USERNAME }}/github-ntfy:dev
+          file: docker-build/Dockerfile
