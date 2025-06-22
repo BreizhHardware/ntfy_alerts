@@ -85,7 +85,7 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: nuxt-frontend
-          path: web/.output  # Uniquement télécharger le répertoire .output
+          path: web/.output/public  # Cibler spécifiquement le répertoire public
 
   docker-build-push:
     if: ${{ github.actor != 'dependabot[bot]' && !startsWith(github.ref, 'refs/heads/dependabot/') }}
