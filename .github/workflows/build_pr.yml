@@ -1,0 +1,141 @@
+name: Build et Push Docker PR Image
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened]
+
+jobs:
+  build-binary:
+    if: ${{ github.actor != 'dependabot[bot]' && !startsWith(github.ref, 'refs/heads/dependabot/') }}
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Installer Rust
+        uses: actions-rs/toolchain@v1
+        with:
+          toolchain: stable
+          target: x86_64-unknown-linux-musl
+          override: true
+
+      - name: Installer cross
+        run: cargo install cross
+
+      - name: Créer Cross.toml pour spécifier OpenSSL vendored
+        run: |
+          cat > Cross.toml << 'EOF'
+          [build.env]
+          passthrough = [
+            "RUSTFLAGS",
+            "OPENSSL_STATIC",
+            "OPENSSL_NO_VENDOR"
+          ]
+          EOF
+
+      - name: Construire avec cross et OpenSSL vendored
+        env:
+          OPENSSL_STATIC: 1
+          RUSTFLAGS: "-C target-feature=+crt-static"
+          OPENSSL_NO_VENDOR: 0
+        run: |
+          cross build --release --target x86_64-unknown-linux-musl --features vendored-openssl
+
+      - name: Préparer le binaire
+        run: |
+          mkdir -p release
+          cp target/x86_64-unknown-linux-musl/release/github-ntfy release/github-ntfy
+
+      - name: Upload binaire comme artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: github-ntfy-pr
+          path: release/github-ntfy
+
+  build-frontend:
+    if: ${{ github.actor != 'dependabot[bot]' && !startsWith(github.ref, 'refs/heads/dependabot/') }}
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Setup PNPM
+        uses: pnpm/action-setup@v2
+        with:
+          version: '10.x'
+          run_install: false
+
+      - name: Build Frontend (Nuxt)
+        run: |
+          cd web
+          pnpm install
+          pnpm generate
+
+      - name: Vérifier le contenu du répertoire output
+        run: |
+          ls -la web/.output || echo "Le répertoire .output n'existe pas!"
+
+      - name: Upload frontend comme artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: nuxt-frontend-pr
+          path: web/.output/public
+
+  docker-build-push:
+    if: ${{ github.actor != 'dependabot[bot]' && !startsWith(github.ref, 'refs/heads/dependabot/') }}
+    needs: [build-binary, build-frontend]
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Configurer Docker
+        uses: docker/setup-buildx-action@v3
+
+      - name: Login Docker Hub
+        uses: docker/login-action@v3
+        with:
+          username: ${{ secrets.DOCKER_USERNAME }}
+          password: ${{ secrets.DOCKER_PASSWORD }}
+
+      - name: Extraire le numéro de PR
+        run: |
+          PR_NUMBER=$(echo $GITHUB_REF | awk 'BEGIN { FS = "/" } ; { print $3 }')
+          echo "PR_NUMBER=$PR_NUMBER" >> $GITHUB_ENV
+
+      - name: Télécharger l'exécutable binaire
+        uses: actions/download-artifact@v4
+        with:
+          name: github-ntfy-pr
+          path: binaries
+
+      - name: Télécharger le frontend
+        uses: actions/download-artifact@v4
+        with:
+          name: nuxt-frontend-pr
+          path: web/.output/public
+
+      - name: Préparer les fichiers pour Docker
+        run: |
+          chmod +x binaries/github-ntfy
+          mkdir -p docker-build
+          cp binaries/github-ntfy docker-build/
+          mkdir -p docker-build/web-output/public
+          cp -r web/.output/public/* docker-build/web-output/public/
+          cp nginx.conf docker-build/
+          cp entrypoint.sh docker-build/
+          cp Dockerfile docker-build/
+          chmod +x docker-build/entrypoint.sh
+
+      - name: Construire et pousser l'image Docker
+        uses: docker/build-push-action@v6
+        with:
+          context: docker-build
+          push: true
+          tags: ${{ secrets.DOCKER_USERNAME }}/github-ntfy:pr-${{ env.PR_NUMBER }}
+          file: docker-build/Dockerfile
