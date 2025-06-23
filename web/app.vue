@@ -3,14 +3,7 @@
     <UContainer>
       <AppHeader />
       <main class="py-8">
-        <!-- Section des dernières mises à jour -->
-        <LatestUpdates />
-
-        <!-- Section des dépôts GitHub et Docker -->
-        <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
-          <GithubRepoSection />
-          <DockerRepoSection />
-        </div>
+        <NuxtPage />
       </main>
       <AppFooter />
     </UContainer>
@@ -18,9 +11,9 @@
 </template>
 
 <script setup>
-// No script content provided in the original code or the change description
+// No script content provided in the original code
 </script>
 
 <style>
-/* No style content provided in the original code or the change description */
+/* No style content provided in the original code */
 </style>
