@@ -1,5 +1,5 @@
 use log::info;
-pub(crate) use rusqlite::{Connection, Result as SqliteResult, OpenFlags};
+pub(crate) use rusqlite::{Connection, Result as SqliteResult, OpenFlags, Error as SqliteError};
 use std::env;
 use std::path::Path;
 use chrono::Utc;
@@ -212,7 +212,10 @@ pub fn update_version(conn: &Connection, repo: &str, version: &str, changelog: O
 
 pub fn create_user(conn: &Connection, username: &str, password: &str, is_admin: bool) -> SqliteResult<i64> {
     let hashed_password = hash(password, DEFAULT_COST).map_err(|e| {
-        rusqlite::Error::UserFunctionError(Box::new(std::io::Error::new(std::io::ErrorKind::Other, e.to_string())))
+        SqliteError::SqliteFailure(
+            rusqlite::ffi::Error::new(1), // Code d'erreur personnalisé
+            Some(e.to_string())
+        )
     })?;
 
     let now = Utc::now().to_rfc3339();
@@ -238,7 +241,10 @@ pub fn get_user_by_username(conn: &Connection, username: &str) -> SqliteResult<O
         let created_at = chrono::DateTime::parse_from_rfc3339(&created_at_str)
             .map(|dt| dt.with_timezone(&Utc))
             .map_err(|e| {
-                rusqlite::Error::UserFunctionError(Box::new(std::io::Error::new(std::io::ErrorKind::Other, e.to_string())))
+                SqliteError::SqliteFailure(
+                    rusqlite::ffi::Error::new(1),
+                    Some(e.to_string())
+                )
             })?;
 
         Ok(Some(User {
@@ -285,7 +291,10 @@ pub fn get_session(conn: &Connection, token: &str) -> SqliteResult<Option<Sessio
         let expires_at = chrono::DateTime::parse_from_rfc3339(&expires_at_str)
             .map(|dt| dt.with_timezone(&Utc))
             .map_err(|e| {
-                rusqlite::Error::UserFunctionError(Box::new(std::io::Error::new(std::io::ErrorKind::Other, e.to_string())))
+                SqliteError::SqliteFailure(
+                    rusqlite::ffi::Error::new(1),
+                    Some(e.to_string())
+                )
             })?;
 
         Ok(Some(Session {
@@ -333,7 +342,10 @@ pub fn get_app_settings(conn: &Connection) -> SqliteResult<Option<AppSettings>> 
         let last_updated = chrono::DateTime::parse_from_rfc3339(&last_updated_str)
             .map(|dt| dt.with_timezone(&Utc))
             .map_err(|e| {
-                rusqlite::Error::UserFunctionError(Box::new(std::io::Error::new(std::io::ErrorKind::Other, e.to_string())))
+                SqliteError::SqliteFailure(
+                    rusqlite::ffi::Error::new(1),
+                    Some(e.to_string())
+                )
             })?;
 
         Ok(Some(AppSettings {

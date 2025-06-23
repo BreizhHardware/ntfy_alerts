@@ -51,6 +51,7 @@ pub async fn start_api() -> Result<(), Box<dyn std::error::Error + Send + Sync>>
             let versions_db = Arc::new(Mutex::new(versions_conn));
 
             // Route definitions
+            let add_github = warp::path("app_github_repo")
                 .and(warp::post())
                 .and(warp::body::json())
                 .and(with_db(db.clone()))
@@ -165,6 +166,27 @@ pub async fn start_api() -> Result<(), Box<dyn std::error::Error + Send + Sync>>
 fn with_db(db: Arc<Mutex<Connection>>) -> impl Filter<Extract = (Arc<Mutex<Connection>>,), Error = std::convert::Infallible> + Clone {
     warp::any().map(move || db.clone())
 }
+
+fn with_auth() -> impl Filter<Extract = (String,), Error = warp::Rejection> + Clone {
+    warp::header::<String>("Authorization")
+        .map(|header: String| {
+            if header.starts_with("Bearer ") {
+                header[7..].to_string()
+            } else {
+                header
+            }
+        })
+        .or_else(|_| async {
+            Err(warp::reject::custom(AuthError::MissingToken))
+        })
+}
+
+#[derive(Debug)]
+enum AuthError {
+    MissingToken,
+}
+
+impl warp::reject::Reject for AuthError {}
 
 async fn add_github_repo(body: RepoRequest, db: Arc<Mutex<Connection>>) -> Result<impl Reply, Rejection> {
     let repo = body.repo;
