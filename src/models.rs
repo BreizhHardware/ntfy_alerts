@@ -1,6 +1,5 @@
 use serde::Deserialize;
 use serde::Serialize;
-use std::collections::HashMap;
 
 // Structures for GitHub data
 #[derive(Debug, Deserialize, Clone)]
