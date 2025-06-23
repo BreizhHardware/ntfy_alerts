@@ -5,15 +5,23 @@
     </template>
 
     <div class="space-y-4">
-      <UAccordion v-for="(update, index) in latestUpdates" :key="index" :items="[{
-        label: `${update.repo} - v${update.version}`,
-        description: `${update.date}`,
-        defaultOpen: false
-      }]">
-        <div class="p-4 bg-gray-700 rounded-md">
-          <div class="prose prose-invert max-w-none" v-html="renderedChangelogs[index]"></div>
-        </div>
-      </UAccordion>
+      <div v-for="(update, index) in latestUpdates" :key="index" class="border border-gray-700 rounded-md overflow-hidden">
+        <button
+          @click="toggleChangelog(index)"
+          class="w-full flex justify-between items-center px-4 py-3 bg-gray-700 hover:bg-gray-600 transition-colors text-left"
+        >
+          <div>
+            <span class="font-medium">{{ update.repo }} - v{{ update.version }}</span>
+            <div class="text-sm text-gray-400">{{ update.date }}</div>
+          </div>
+          <UIcon :name="openStates[index] ? 'i-heroicons-chevron-up' : 'i-heroicons-chevron-down'" class="text-gray-400" />
+        </button>
+        <div
+          v-show="openStates[index]"
+          class="p-4 bg-gray-800 prose prose-invert max-w-none transition-all"
+          v-html="renderedChangelogs[index]"
+        ></div>
+      </div>
     </div>
   </UCard>
 </template>
@@ -23,6 +31,7 @@ import { marked } from 'marked';
 
 const latestUpdates = ref([]);
 const renderedChangelogs = ref([]);
+const openStates = ref([]);
 
 onMounted(async () => {
   try {
@@ -32,6 +41,7 @@ onMounted(async () => {
       renderedChangelogs.value = latestUpdates.value.map(update =>
         marked(update.changelog)
       );
+      openStates.value = Array(latestUpdates.value.length).fill(false);
     } else {
       console.error('Erreur lors de la récupération des mises à jour');
     }
@@ -39,6 +49,10 @@ onMounted(async () => {
     console.error('Erreur:', error);
   }
 });
+
+function toggleChangelog(index) {
+  openStates.value[index] = !openStates.value[index];
+}
 </script>
 
 <style>
