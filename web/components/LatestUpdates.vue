@@ -28,7 +28,6 @@ onMounted(async () => {
     const response = await fetch('/latest_updates');
     if (response.ok) {
       latestUpdates.value = await response.json();
-      // Pré-rendre tous les changelogs avec marked
       renderedChangelogs.value = latestUpdates.value.map(update =>
         marked(update.changelog)
       );
@@ -42,7 +41,6 @@ onMounted(async () => {
 </script>
 
 <style>
-/* Style pour le markdown rendu */
 .prose h1, .prose h2, .prose h3 {
   margin-top: 1em;
   margin-bottom: 0.5em;
