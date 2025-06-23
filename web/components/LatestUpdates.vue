@@ -11,7 +11,7 @@
           class="w-full flex justify-between items-center px-4 py-3 bg-gray-700 hover:bg-gray-600 transition-colors text-left"
         >
           <div>
-            <span class="font-medium">{{ update.repo }} - v{{ update.version }}</span>
+            <span class="font-medium">{{ update.repo }} - {{ update.version }}</span>
             <div class="text-sm text-gray-400">{{ update.date }}</div>
           </div>
           <UIcon :name="openStates[index] ? 'i-heroicons-chevron-up' : 'i-heroicons-chevron-down'" class="text-gray-400" />
