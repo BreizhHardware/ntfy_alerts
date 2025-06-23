@@ -6,7 +6,8 @@
 
     <div class="space-y-4">
       <UAccordion v-for="(update, index) in latestUpdates" :key="index" :items="[{
-        label: `${update.date} - ${update.repo} - v${update.version}`,
+        label: `${update.repo} - v${update.version}`,
+        description: `${update.date}`,
         defaultOpen: false
       }]">
         <div class="p-4 bg-gray-700 rounded-md">
