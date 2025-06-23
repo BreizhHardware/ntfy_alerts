@@ -5,7 +5,7 @@ export default defineNuxtPlugin(() => {
   addRouteMiddleware('auth', (to) => {
     console.log('Auth middleware executed for route:', to.path);
 
-    if (to.path === '/login' || to.path === '/register') {
+    if (to.path === '/login' || to.path === '/onboarding') {
       return;
     }
 

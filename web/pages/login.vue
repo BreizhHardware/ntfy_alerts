@@ -48,8 +48,8 @@
       <div class="text-center mt-4">
         <p class="text-sm text-gray-400">
           First time?
-          <NuxtLink to="/register" class="font-medium text-indigo-400 hover:text-indigo-300">
-            Create an account
+          <NuxtLink to="/onboarding" class="font-medium text-indigo-400 hover:text-indigo-300">
+            Setup your application
           </NuxtLink>
         </p>
       </div>

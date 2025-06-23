@@ -3,7 +3,7 @@
     <div class="max-w-3xl mx-auto bg-gray-800 rounded-lg shadow-lg overflow-hidden">
       <div class="p-6 border-b border-gray-700">
         <h1 class="text-2xl font-bold text-white">Application Setup</h1>
-        <p class="mt-2 text-gray-400">Configure your notification services to start receiving alerts</p>
+        <p class="mt-2 text-gray-400">Configure your application and create an administrator account</p>
       </div>
 
       <UStepper v-model="step" :items="steps" class="p-6">
@@ -14,8 +14,50 @@
       </UStepper>
 
       <div class="p-6">
-        <!-- Step 1: Main notification service -->
+        <!-- Step 1: Create Administrator Account -->
         <div v-if="step === 1" class="space-y-6">
+          <div>
+            <h3 class="text-lg font-medium text-white mb-4">Create Administrator Account</h3>
+            <p class="text-sm text-gray-400 mb-6">This account will have full access to manage the application</p>
+
+            <div class="space-y-4">
+              <div>
+                <label for="username" class="block text-sm font-medium text-gray-400">Username</label>
+                <UInput
+                  id="username"
+                  v-model="adminUser.username"
+                  placeholder="admin"
+                  class="w-full"
+                />
+              </div>
+
+              <div>
+                <label for="password" class="block text-sm font-medium text-gray-400">Password</label>
+                <UInput
+                  id="password"
+                  v-model="adminUser.password"
+                  type="password"
+                  placeholder="********"
+                  class="w-full"
+                />
+              </div>
+
+              <div>
+                <label for="confirmPassword" class="block text-sm font-medium text-gray-400">Confirm Password</label>
+                <UInput
+                  id="confirmPassword"
+                  v-model="adminUser.confirmPassword"
+                  type="password"
+                  placeholder="********"
+                  class="w-full"
+                />
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Step 2: Main notification service -->
+        <div v-if="step === 2" class="space-y-6">
           <div>
             <label class="block text-sm font-medium text-gray-400 mb-2">Main notification service</label>
             <USelect
@@ -90,8 +132,8 @@
           </div>
         </div>
 
-        <!-- Step 2: GitHub Settings -->
-        <div v-if="step === 2" class="space-y-6">
+        <!-- Step 3: GitHub Settings -->
+        <div v-if="step === 3" class="space-y-6">
           <div>
             <label for="github_token" class="block text-sm font-medium text-gray-400">GitHub Token (optional)</label>
             <UInput
@@ -106,8 +148,8 @@
           </div>
         </div>
 
-        <!-- Step 3: Docker Hub Settings -->
-        <div v-if="step === 3" class="space-y-6">
+        <!-- Step 4: Docker Hub Settings -->
+        <div v-if="step === 4" class="space-y-6">
           <div>
             <label for="docker_username" class="block text-sm font-medium text-gray-400">Docker Hub Username (optional)</label>
             <UInput
@@ -132,8 +174,8 @@
           </div>
         </div>
 
-        <!-- Step 4: Advanced Settings -->
-        <div v-if="step === 4" class="space-y-6">
+        <!-- Step 5: Advanced Settings -->
+        <div v-if="step === 5" class="space-y-6">
           <div>
             <label for="check_interval" class="block text-sm font-medium text-gray-400">Check Interval (seconds)</label>
             <UInput
@@ -189,15 +231,38 @@
 const auth = useAuth();
 const router = useRouter();
 
-// Check if user is authenticated
-onMounted(() => {
-  if (!auth.isAuthenticated.value) {
-    router.push('/login');
+// Check if admin exists and redirect accordingly
+onMounted(async () => {
+  try {
+    const response = await fetch('/is_configured');
+    if (response.ok) {
+      const data = await response.json();
+      const adminExists = data.data && data.data.admin_exists;
+
+      // If admin exists, redirect to login or dashboard
+      if (adminExists) {
+        if (auth.isAuthenticated.value) {
+          router.push('/');
+        } else {
+          router.push('/login');
+        }
+      }
+    }
+  } catch (err) {
+    console.error('Error checking configuration:', err);
   }
+});
+
+// Admin user creation data
+const adminUser = reactive({
+  username: '',
+  password: '',
+  confirmPassword: '',
 });
 
 // Onboarding steps
 const steps = [
+  { title: 'Create Admin', description: 'Create your administrator account' },
   { title: 'Notification Service', description: 'Choose your main notification service' },
   { title: 'GitHub Settings', description: 'Configure options for GitHub' },
   { title: 'Docker Hub Settings', description: 'Configure options for Docker Hub' },
@@ -231,9 +296,42 @@ const settings = reactive({
 });
 
 // Function to proceed to next step
-function nextStep() {
+async function nextStep() {
   // Validate current step
   if (step.value === 1) {
+    // Validate admin user creation
+    if (!adminUser.username) {
+      error.value = 'Please enter a username';
+      return;
+    }
+    if (!adminUser.password) {
+      error.value = 'Please enter a password';
+      return;
+    }
+    if (adminUser.password !== adminUser.confirmPassword) {
+      error.value = 'Passwords do not match';
+      return;
+    }
+
+    // Create admin user
+    try {
+      error.value = '';
+      loading.value = true;
+
+      // Register admin user
+      await auth.register(adminUser.username, adminUser.password, true);
+
+      // Continue to next step
+      loading.value = false;
+      step.value++;
+      return;
+    } catch (err) {
+      error.value = err.message || 'Error creating admin user';
+      loading.value = false;
+      return;
+    }
+  }
+  else if (step.value === 2) {
     if (!selectedService.value) {
       error.value = 'Please select a notification service';
       return;
