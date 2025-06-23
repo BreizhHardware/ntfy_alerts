@@ -1,7 +1,6 @@
 use log::info;
 pub(crate) use rusqlite::{Connection, Result as SqliteResult, OpenFlags, Error as SqliteError};
 use std::env;
-use std::path::Path;
 use chrono::Utc;
 use rand::Rng;
 use bcrypt::{hash, verify, DEFAULT_COST};

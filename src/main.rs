@@ -9,7 +9,6 @@ mod api;
 use log::{error, info};
 use std::thread;
 use std::time::Duration;
-use tokio::task;
 
 // Function to start the API in a separate thread
 fn start_api() {

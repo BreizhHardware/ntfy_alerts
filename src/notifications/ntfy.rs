@@ -1,5 +1,5 @@
 use log::{error, info};
-use reqwest::header::{HeaderMap, HeaderValue, AUTHORIZATION};
+use reqwest::header::{HeaderMap, HeaderValue};
 use crate::models::{GithubReleaseInfo, DockerReleaseInfo};
 
 pub async fn send_github_notification(release: &GithubReleaseInfo, auth: &str, ntfy_url: &str) {

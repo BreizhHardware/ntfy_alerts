@@ -1,13 +1,12 @@
 use log::{error, info};
-use rusqlite::{Connection, Result as SqliteResult, params};
+use rusqlite::{Connection, params};
 use serde_json::json;
 use std::env;
 use std::sync::Arc;
 use tokio::sync::Mutex;
 use warp::{Filter, Reply, Rejection};
-use warp::http::{StatusCode, header};
+use warp::http::StatusCode;
 use serde::{Serialize, Deserialize};
-use warp::cors::Cors;
 use chrono::Utc;
 use crate::database::{
     get_user_by_username, verify_password, create_user, create_session,
@@ -198,7 +197,7 @@ async fn add_github_repo(body: RepoRequest, db: Arc<Mutex<Connection>>) -> Resul
         ));
     }
 
-    let mut db_guard = db.lock().await;
+    let db_guard = db.lock().await;
 
     // Check if repository already exists
     match db_guard.query_row(
@@ -250,7 +249,7 @@ async fn add_docker_repo(body: RepoRequest, db: Arc<Mutex<Connection>>) -> Resul
         ));
     }
 
-    let mut db_guard = db.lock().await;
+    let db_guard = db.lock().await;
 
     // Check if repository already exists
     match db_guard.query_row(
@@ -388,7 +387,7 @@ async fn delete_github_repo(body: RepoRequest, db: Arc<Mutex<Connection>>) -> Re
         ));
     }
 
-    let mut db_guard = db.lock().await;
+    let db_guard = db.lock().await;
 
     // Check if repository exists
     match db_guard.query_row(
@@ -440,7 +439,7 @@ async fn delete_docker_repo(body: RepoRequest, db: Arc<Mutex<Connection>>) -> Re
         ));
     }
 
-    let mut db_guard = db.lock().await;
+    let db_guard = db.lock().await;
 
     // Check if repository exists
     match db_guard.query_row(
