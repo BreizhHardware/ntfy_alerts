@@ -77,9 +77,9 @@ jobs:
           pnpm install
           pnpm generate
 
-      - name: Vérifier le contenu du répertoire output
+      - name: Vérifier le contenu du répertoire output/public
         run: |
-          ls -la web/.output || echo "Le répertoire .output n'existe pas!"
+          ls -la web/.output/public || echo "Le répertoire .output/public n'existe pas!"
 
       - name: Upload frontend comme artifact
         uses: actions/upload-artifact@v4
@@ -104,7 +104,7 @@ jobs:
           username: ${{ secrets.DOCKER_USERNAME }}
           password: ${{ secrets.DOCKER_PASSWORD }}
 
-      - name: Télécharger le binaire
+      - name: Télécharger l'exécutable binaire
         uses: actions/download-artifact@v4
         with:
           name: github-ntfy
@@ -114,14 +114,15 @@ jobs:
         uses: actions/download-artifact@v4
         with:
           name: nuxt-frontend
-          path: web/.output
+          path: web/.output/public
 
       - name: Préparer les fichiers pour Docker
         run: |
           chmod +x binaries/github-ntfy
           mkdir -p docker-build
           cp binaries/github-ntfy docker-build/
-          cp -r web/.output docker-build/web-output
+          mkdir -p docker-build/web-output/public
+          cp -r web/.output/public/* docker-build/web-output/public/
           cp nginx.conf docker-build/
           cp entrypoint.sh docker-build/
           cp Dockerfile docker-build/
