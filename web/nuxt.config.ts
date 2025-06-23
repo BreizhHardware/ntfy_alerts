@@ -15,5 +15,8 @@ export default defineNuxtConfig({
       '@tailwindcss/postcss': {},
       autoprefixer: {},
     },
-  }
+  },
+  plugins: [
+    '~/plugins/auth.js'
+  ]
 })
