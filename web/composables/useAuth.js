@@ -59,14 +59,19 @@ export const useAuth = () => {
   };
 
   // Registration function
-  const register = async (username, password, isAdmin = false) => {
+  const register = async (username, password, isAdmin = false, isPending = false) => {
     try {
       const response = await fetch('/auth/register', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({ username, password, is_admin: isAdmin }),
+        body: JSON.stringify({
+          username,
+          password,
+          is_admin: isAdmin,
+          is_pending: isPending
+        }),
       });
 
       if (!response.ok) {
@@ -78,6 +83,11 @@ export const useAuth = () => {
 
       if (!data.success || !data.data) {
         throw new Error(data.message || 'Registration failed');
+      }
+
+      // If registration is pending, don't store auth info
+      if (isPending) {
+        return data;
       }
 
       // Store authentication information

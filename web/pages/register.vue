@@ -6,6 +6,10 @@
         <p class="mt-2 text-sm text-gray-400">Sign up to manage your notifications</p>
       </div>
 
+      <div v-if="existingUsers && !isAdminUser" class="p-4 mb-4 text-sm text-yellow-400 bg-yellow-900 bg-opacity-30 rounded-md">
+        New accounts require administrator approval. Your registration will be submitted for review.
+      </div>
+
       <form @submit.prevent="handleRegister" class="mt-8 space-y-6">
         <div>
           <label for="username" class="block text-sm font-medium text-gray-400">Username</label>
@@ -68,7 +72,7 @@
             block
             :loading="loading"
           >
-            Register
+            {{ existingUsers && !isAdminUser ? 'Submit Registration Request' : 'Register' }}
           </UButton>
         </div>
       </form>
@@ -99,14 +103,23 @@ const form = reactive({
 const error = ref('');
 const loading = ref(false);
 const existingUsers = ref(false);
+const isAdminUser = ref(false);
 
-// Check if users already exist
+// Check if users already exist and if current user is admin
 onMounted(async () => {
   try {
+    // Check if admin exists
     const response = await fetch('/is_configured');
     if (response.ok) {
       const data = await response.json();
       existingUsers.value = data.data && data.data.admin_exists;
+    }
+
+    // Check if current user is admin (if logged in)
+    const userData = localStorage.getItem('user');
+    if (userData) {
+      const user = JSON.parse(userData);
+      isAdminUser.value = user.is_admin === true;
     }
   } catch (err) {
     console.error('Error checking for existing users:', err);
@@ -124,11 +137,21 @@ async function handleRegister() {
     loading.value = true;
     error.value = '';
 
-    await auth.register(form.username, form.password, existingUsers.value ? false : form.isAdmin);
+    // If users exist and current user is not admin, set pending flag
+    const isPending = existingUsers.value && !isAdminUser.value;
+
+    await auth.register(form.username, form.password, existingUsers.value ? false : form.isAdmin, isPending);
 
     // Redirect to onboarding page if it's the first user
     if (!existingUsers.value) {
       router.push('/onboarding');
+    } else if (isPending) {
+      // Show success message for pending registration
+      error.value = 'Registration submitted for approval. You will be notified when approved.';
+      form.username = '';
+      form.password = '';
+      form.confirmPassword = '';
+      // Don't redirect
     } else {
       router.push('/');
     }
