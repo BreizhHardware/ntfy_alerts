@@ -1,9 +1,12 @@
 use dotenv::dotenv;
+use log::info;
 use reqwest::header::{HeaderMap, HeaderValue, AUTHORIZATION};
 use std::env;
 use std::fs::File;
 use std::io::Read;
+use rusqlite::Connection;
 use crate::docker::create_dockerhub_token;
+use crate::database::get_app_settings;
 
 // Configuration
 pub struct Config {
@@ -55,6 +58,49 @@ impl Config {
                 .parse()
                 .unwrap_or(3600.0),
         }
+    }
+
+    pub fn from_database(conn: &Connection) -> Self {
+        // First, try to load from database
+        if let Ok(Some(settings)) = get_app_settings(conn) {
+            let docker_username = settings.docker_username;
+            let docker_password = settings.docker_password.clone();
+
+            let docker_token = if let (Some(username), Some(password)) = (&docker_username, &docker_password) {
+                create_dockerhub_token(username, password)
+            } else {
+                None
+            };
+
+            // Read authentication file (for compatibility with the old system)
+            let mut auth = String::new();
+            if let Ok(mut file) = File::open("/auth.txt") {
+                file.read_to_string(&mut auth).ok();
+                auth = auth.trim().to_string();
+            }
+
+            let timeout = settings.check_interval.unwrap_or(3600) as f64;
+
+            info!("Configuration loaded from database");
+
+            return Config {
+                github_token: settings.github_token,
+                docker_username,
+                docker_password,
+                docker_token,
+                ntfy_url: settings.ntfy_url,
+                gotify_url: settings.gotify_url,
+                gotify_token: settings.gotify_token,
+                discord_webhook_url: settings.discord_webhook_url,
+                slack_webhook_url: settings.slack_webhook_url,
+                auth,
+                timeout,
+            };
+        }
+
+        // Fallback to environment variables if database is not available
+        info!("No configuration found in database, using environment variables");
+        Self::from_env()
     }
 
     pub fn github_headers(&self) -> HeaderMap {

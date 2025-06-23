@@ -17,9 +17,16 @@ COPY nginx.conf /etc/nginx/nginx.conf
 COPY entrypoint.sh /app/entrypoint.sh
 RUN chmod +x /app/entrypoint.sh
 
-# Créer le répertoire de données
-RUN mkdir -p /github-ntfy && chmod 755 /github-ntfy
+# Créer le répertoire de données et définir les permissions
+RUN mkdir -p /github-ntfy && chmod 777 /github-ntfy
 
-EXPOSE 5000 80 3000
+# Variables d'environnement (optionnelles)
+ENV DB_PATH=/github-ntfy
+ENV RUST_LOG=info
+
+# Volumes pour la persistance des données
+VOLUME ["/github-ntfy"]
+
+EXPOSE 5000 80
 
 ENTRYPOINT ["/app/entrypoint.sh"]
