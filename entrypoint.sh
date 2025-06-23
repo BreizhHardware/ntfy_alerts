@@ -6,8 +6,6 @@ echo -n "$USERNAME:$PASSWORD" | base64 > /auth.txt
 # Démarrer nginx en arrière-plan
 nginx -g 'daemon off;' &
 
-# Démarrer le serveur Nuxt en arrière-plan
-cd /var/www/html && node ./server/index.mjs &
 
 # Démarrer l'API principale
 exec /usr/local/bin/github-ntfy
