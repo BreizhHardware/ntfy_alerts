@@ -18,7 +18,7 @@ COPY entrypoint.sh /app/entrypoint.sh
 RUN chmod +x /app/entrypoint.sh
 
 # Créer le répertoire de données et définir les permissions
-RUN mkdir -p /github-ntfy && chmod 777 /github-ntfy
+RUN mkdir -p /github-ntfy && chmod 755 /github-ntfy
 
 # Variables d'environnement (optionnelles)
 ENV DB_PATH=/github-ntfy
