@@ -12,7 +12,7 @@ fi
 
 # Set database directory permissions
 if [ -d "/github-ntfy" ]; then
-  chmod -R 777 /github-ntfy
+  chmod -R 755 /github-ntfy
   echo "Permissions applied to data directory"
 fi
 
