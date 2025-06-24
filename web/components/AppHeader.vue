@@ -5,6 +5,17 @@
 
       <div v-if="auth.isAuthenticated" class="flex space-x-3">
         <UButton
+          v-if="auth.isAdmin"
+          to="/onboarding?force=true"
+          variant="ghost"
+          color="white"
+          icon="i-heroicons-cog-8-tooth"
+          size="sm"
+        >
+          Onboarding
+        </UButton>
+
+        <UButton
           to="/settings"
           variant="ghost"
           color="white"

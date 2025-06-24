@@ -230,10 +230,22 @@
 <script setup>
 const auth = useAuth();
 const router = useRouter();
+const route = useRoute();
 
 // Check if admin exists and redirect accordingly
 onMounted(async () => {
   try {
+    // Check if force parameter is present in the URL
+    const forceOnboarding = route.query.force === 'true';
+
+    // If forcing onboarding and user is authenticated as admin, allow access
+    if (forceOnboarding && auth.isAuthenticated.value && auth.isAdmin.value) {
+      // Load existing settings if available
+      await loadExistingSettings();
+      return;
+    }
+
+    // Otherwise check if admin exists
     const response = await fetch('/is_configured');
     if (response.ok) {
       const data = await response.json();
@@ -391,6 +403,51 @@ async function saveSettings() {
     error.value = err.message || 'An error occurred while saving settings';
   } finally {
     loading.value = false;
+  }
+}
+
+// Function to load existing settings
+async function loadExistingSettings() {
+  try {
+    if (!auth.isAuthenticated.value) return;
+
+    const response = await fetch('/settings', {
+      headers: {
+        'Authorization': auth.token.value
+      }
+    });
+
+    if (response.ok) {
+      const data = await response.json();
+      if (data.success && data.data) {
+        // Populate settings with existing values
+        const existingSettings = data.data;
+
+        // Update notification service selection
+        if (existingSettings.ntfy_url) {
+          selectedService.value = 'ntfy';
+          settings.ntfy_url = existingSettings.ntfy_url;
+        } else if (existingSettings.discord_webhook_url) {
+          selectedService.value = 'discord';
+          settings.discord_webhook_url = existingSettings.discord_webhook_url;
+        } else if (existingSettings.slack_webhook_url) {
+          selectedService.value = 'slack';
+          settings.slack_webhook_url = existingSettings.slack_webhook_url;
+        } else if (existingSettings.gotify_url) {
+          selectedService.value = 'gotify';
+          settings.gotify_url = existingSettings.gotify_url;
+          settings.gotify_token = existingSettings.gotify_token;
+        }
+
+        // Update other settings
+        settings.github_token = existingSettings.github_token || '';
+        settings.docker_username = existingSettings.docker_username || '';
+        settings.docker_password = existingSettings.docker_password || '';
+        settings.check_interval = existingSettings.check_interval || 3600;
+      }
+    }
+  } catch (err) {
+    console.error('Error loading existing settings:', err);
   }
 }
 </script>
