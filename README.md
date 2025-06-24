@@ -1,6 +1,6 @@
 <h1 align="center">Welcome to ntfy_alerts 👋</h1>
 <p>
-  <img alt="Version" src="https://img.shields.io/badge/version-2.0-blue.svg?cacheSeconds=2592000" />
+  <img alt="Version" src="https://img.shields.io/badge/version-2.1-blue.svg?cacheSeconds=2592000" />
   <a href="#" target="_blank">
     <img alt="License: GPL--3" src="https://img.shields.io/badge/License-GPL--3-yellow.svg" />
   </a>
@@ -22,18 +22,6 @@ services:
   github-ntfy:
     image: breizhhardware/github-ntfy:latest
     container_name: github-ntfy
-    environment:
-      - USERNAME=username # Required
-      - PASSWORD=password # Required
-      - NTFY_URL=ntfy_url # Required if ntfy is used
-      - GHNTFY_TIMEOUT=timeout # Default is 3600 (1 hour)
-      - GHNTFY_TOKEN= # Default is empty (Github token)
-      - DOCKER_USERNAME= # Default is empty (Docker Hub username)
-      - DOCKER_PASSWORD= # Default is empty (Docker Hub password)
-      - GOTIFY_URL=gotify_url # Required if gotify is used
-      - GOTIFY_TOKEN= # Required if gotify is used
-      - DISCORD_WEBHOOK_URL= # Required if discord is used
-      - SLACK_WEBHOOK_URL= # Required if Slack is used
     volumes:
       - /path/to/data:/data
     ports:
@@ -72,9 +60,9 @@ The GitHub token (GHNTFY_TOKEN) needs to have the following permissions: repo, r
 
 ## TODO
 - [ ] Add support for multi achitecture Docker images
-- [ ] Rework web interface
+- [x] Rework web interface
 - [ ] Add support for more notification services (Telegram, Matrix, etc.)
-- [ ] Add web oneboarding instead of using environment variables
+- [x] Add web oneboarding instead of using environment variables
 
 ## Author
 👤 BreizhHardware

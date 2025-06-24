@@ -9,7 +9,6 @@ mod api;
 use log::{error, info};
 use std::thread;
 use std::time::Duration;
-use tokio::task;
 
 // Function to start the API in a separate thread
 fn start_api() {
@@ -28,24 +27,28 @@ fn start_api() {
 async fn main() -> Result<(), Box<dyn std::error::Error>> {
     env_logger::init();
 
-    let config = config::Config::from_env();
+    // Initialize databases
     let (conn_versions, conn_repos) = database::init_databases()?;
 
+    // Load configuration from database, with fallback to environment variables
+    let config = config::Config::from_database(&conn_versions);
+
+    // Start the REST API
     start_api();
 
     let client = reqwest::Client::new();
 
+    // Check if configuration is complete
     if config.auth.is_empty() || (config.ntfy_url.is_none() && config.gotify_url.is_none()
         && config.discord_webhook_url.is_none() && config.slack_webhook_url.is_none()) {
-        error!("Incorrect configuration!");
-        error!("auth: can be generated with the command: echo -n 'username:password' | base64");
-        error!("NTFY_URL: URL of the ntfy server");
-        error!("GOTIFY_URL: URL of the gotify server");
-        error!("GOTIFY_TOKEN: Gotify token");
-        error!("DISCORD_WEBHOOK_URL: Discord webhook URL");
-        error!("SLACK_WEBHOOK_URL: Slack webhook URL");
-        error!("GHNTFY_TIMEOUT: interval between checks");
-        return Ok(());
+        info!("No notification service is configured.");
+        info!("Please configure at least one notification service via the web interface or environment variables.");
+        info!("The REST API is still available for configuration.");
+
+        // Continue running to allow configuration through the API
+        loop {
+            thread::sleep(Duration::from_secs(60));
+        }
     }
 
     info!("Starting version monitoring...");

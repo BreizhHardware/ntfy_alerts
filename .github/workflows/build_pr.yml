@@ -78,7 +78,7 @@ jobs:
 
       - name: Vérifier le contenu du répertoire output
         run: |
-          ls -la web/.output || echo "Le répertoire .output n'existe pas!"
+          ls -la web/.output/public || echo "Le répertoire .output n'existe pas!"
 
       - name: Upload frontend comme artifact
         uses: actions/upload-artifact@v4

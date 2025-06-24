@@ -29,18 +29,44 @@ jobs:
           MINOR=$(echo $VERSION | cut -d. -f2)
           PATCH=$(echo $VERSION | cut -d. -f3)
           
-          # Incrémenter le patch
-          PATCH=$((PATCH + 1))
+          # Récupérer le dernier message de commit
+          COMMIT_MSG=$(git log -1 --pretty=%B)
+          
+          # Déterminer quel niveau de version doit être incrémenté
+          if echo "$COMMIT_MSG" | grep -q "\[bump-major\]"; then
+            echo "Incrémentation de la version majeure détectée dans le message de commit"
+            MAJOR=$((MAJOR + 1))
+            MINOR=0
+            PATCH=0
+          elif echo "$COMMIT_MSG" | grep -q "\[bump-minor\]"; then
+            echo "Incrémentation de la version mineure détectée dans le message de commit"
+            MINOR=$((MINOR + 1))
+            PATCH=0
+          elif echo "$COMMIT_MSG" | grep -q "\[version="; then
+            # Format personnalisé: [version=X.Y.Z]
+            CUSTOM_VERSION=$(echo "$COMMIT_MSG" | grep -o '\[version=[0-9]*\.[0-9]*\.[0-9]*\]' | sed 's/\[version=\(.*\)\]/\1/')
+            if [ ! -z "$CUSTOM_VERSION" ]; then
+              echo "Version personnalisée détectée: $CUSTOM_VERSION"
+              MAJOR=$(echo $CUSTOM_VERSION | cut -d. -f1)
+              MINOR=$(echo $CUSTOM_VERSION | cut -d. -f2)
+              PATCH=$(echo $CUSTOM_VERSION | cut -d. -f3)
+            else
+              # Incrémentation de patch par défaut
+              PATCH=$((PATCH + 1))
+            fi
+          else
+            # Incrémentation de patch par défaut
+            PATCH=$((PATCH + 1))
+          fi
           
           # Nouvelle version
           NEW_VERSION="v$MAJOR.$MINOR.$PATCH"
           echo "Nouvelle version: $NEW_VERSION"
           echo "tag=$NEW_VERSION" >> $GITHUB_OUTPUT
 
-  build-binaries:
+  build-binary:
     needs: version
     runs-on: ubuntu-latest
-
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
@@ -109,14 +135,18 @@ jobs:
           pnpm install
           pnpm generate
 
+      - name: Vérifier le contenu du répertoire output
+        run: |
+          ls -la web/.output/public || echo "Le répertoire .output n'existe pas!"
+
       - name: Upload frontend comme artifact
         uses: actions/upload-artifact@v4
         with:
           name: nuxt-frontend
-          path: web/.output
+          path: web/.output/public
 
   docker-build-push:
-    needs: [version, build-binaries, build-frontend]
+    needs: [version, build-binary, build-frontend]
     runs-on: ubuntu-latest
     steps:
       - name: Checkout code
@@ -141,19 +171,20 @@ jobs:
         uses: actions/download-artifact@v4
         with:
           name: nuxt-frontend
-          path: web/.output
+          path: web/.output/public
 
       - name: Préparer les fichiers pour Docker
         run: |
           chmod +x binaries/github-ntfy
           mkdir -p docker-build
           cp binaries/github-ntfy docker-build/
-          cp -r web/.output docker-build/web
+          mkdir -p docker-build/web-output/public
+          cp -r web/.output/public/* docker-build/web-output/public/
           cp nginx.conf docker-build/
           cp entrypoint.sh docker-build/
+          cp Dockerfile docker-build/
           chmod +x docker-build/entrypoint.sh
 
-      # Construire et pousser l'image multi-architecture
       - name: Construire et pousser l'image Docker
         uses: docker/build-push-action@v6
         with:
@@ -162,10 +193,10 @@ jobs:
           tags: |
             breizhhardware/github-ntfy:latest
             breizhhardware/github-ntfy:${{ needs.version.outputs.version }}
-          file: Dockerfile
+          file: docker-build/Dockerfile
 
   create-release:
-    needs: [version, build-binaries, build-frontend]
+    needs: [version, build-binary, build-frontend]
     runs-on: ubuntu-latest
     steps:
       - name: Checkout code
@@ -181,13 +212,13 @@ jobs:
         uses: actions/download-artifact@v4
         with:
           name: nuxt-frontend
-          path: web/.output
+          path: web/.output/public
 
       - name: Préparer les fichiers pour la release
         run: |
           mkdir -p release-artifacts
           cp binaries/github-ntfy release-artifacts/
-          tar -czf release-artifacts/frontend.tar.gz -C web/.output .
+          tar -czf release-artifacts/frontend.tar.gz -C web/.output/public .
 
       - name: Créer une release GitHub
         uses: softprops/action-gh-release@v1

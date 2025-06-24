@@ -1,15 +1,16 @@
-name: Dependabot Build Check
+name: Dependabot Build
 
 on:
   pull_request:
-    branches: [dev]
-
-permissions:
-  contents: read
-  pull-requests: read
+    branches: [ 'main', 'dev' ]
+    paths:
+      - '**/Cargo.toml'
+      - '**/Cargo.lock'
+      - 'web/package.json'
+      - 'web/pnpm-lock.yaml'
 
 jobs:
-  build:
+  build-binary:
     if: ${{ startsWith(github.ref, 'refs/heads/dependabot/') || github.actor == 'dependabot[bot]' }}
     runs-on: ubuntu-latest
     steps:
@@ -28,18 +29,40 @@ jobs:
 
       - name: Créer Cross.toml pour spécifier OpenSSL vendored
         run: |
-          cat > Cross.toml << 'EOL'
-          [target.x86_64-unknown-linux-musl]
-          image = "ghcr.io/cross-rs/x86_64-unknown-linux-musl:main"
-
+          cat > Cross.toml << 'EOF'
           [build.env]
           passthrough = [
-              "RUST_BACKTRACE",
+            "RUSTFLAGS",
+            "OPENSSL_STATIC",
+            "OPENSSL_NO_VENDOR"
           ]
-          EOL
+          EOF
 
-      - name: Build Backend (Rust)
-        run: cross build --release --target x86_64-unknown-linux-musl
+      - name: Construire avec cross et OpenSSL vendored
+        env:
+          OPENSSL_STATIC: 1
+          RUSTFLAGS: "-C target-feature=+crt-static"
+          OPENSSL_NO_VENDOR: 0
+        run: |
+          cross build --release --target x86_64-unknown-linux-musl --features vendored-openssl
+
+      - name: Préparer le binaire
+        run: |
+          mkdir -p release
+          cp target/x86_64-unknown-linux-musl/release/github-ntfy release/github-ntfy
+
+      - name: Upload binaire comme artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: github-ntfy-dependabot
+          path: release/github-ntfy
+
+  build-frontend:
+    if: ${{ github.actor == 'dependabot[bot]' || startsWith(github.ref, 'refs/heads/dependabot/') }}
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
 
       - name: Setup Node.js
         uses: actions/setup-node@v4
@@ -56,10 +79,14 @@ jobs:
         run: |
           cd web
           pnpm install
-          pnpm build
+          pnpm generate
 
-      - name: Afficher des informations de débogage
+      - name: Vérifier le contenu du répertoire output
         run: |
-          echo "Acteur: ${{ github.actor }}"
-          echo "Référence de la branche: ${{ github.head_ref }}"
-          echo "Event name: ${{ github.event_name }}"
+          ls -la web/.output/public || echo "Le répertoire .output n'existe pas!"
+
+      - name: Upload frontend comme artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: nuxt-frontend-dependabot
+          path: web/.output/public
