@@ -213,7 +213,7 @@ pub fn update_version(conn: &Connection, repo: &str, version: &str, changelog: O
 pub fn create_user(conn: &Connection, username: &str, password: &str, is_admin: bool) -> SqliteResult<i64> {
     let hashed_password = hash(password, DEFAULT_COST).map_err(|e| {
         SqliteError::SqliteFailure(
-            rusqlite::ffi::Error::new(1), // Code d'erreur personnalisé
+            rusqlite::ffi::Error::new(BCRYPT_HASH_ERROR), // Custom error code for bcrypt hashing failure
             Some(e.to_string())
         )
     })?;
