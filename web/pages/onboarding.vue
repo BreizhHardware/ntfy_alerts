@@ -15,7 +15,7 @@
 
       <div class="p-6">
         <!-- Step 1: Create Administrator Account -->
-        <div v-if="step === 1" class="space-y-6">
+        <div v-if="step === 0" class="space-y-6">
           <div>
             <h3 class="text-lg font-medium text-white mb-4">Create Administrator Account</h3>
             <p class="text-sm text-gray-400 mb-6">This account will have full access to manage the application</p>
@@ -57,16 +57,13 @@
         </div>
 
         <!-- Step 2: Main notification service -->
-        <div v-if="step === 2" class="space-y-6">
+        <div v-if="step === 1" class="space-y-6">
           <div>
             <label class="block text-sm font-medium text-gray-400 mb-2">Main notification service</label>
             <USelect
               v-model="selectedService"
               :options="notificationServices"
-              option-attribute="label"
-              value-attribute="value"
               placeholder="Select a notification service"
-              class="w-full"
             />
           </div>
 
@@ -133,7 +130,7 @@
         </div>
 
         <!-- Step 3: GitHub Settings -->
-        <div v-if="step === 3" class="space-y-6">
+        <div v-if="step === 2" class="space-y-6">
           <div>
             <label for="github_token" class="block text-sm font-medium text-gray-400">GitHub Token (optional)</label>
             <UInput
@@ -149,7 +146,7 @@
         </div>
 
         <!-- Step 4: Docker Hub Settings -->
-        <div v-if="step === 4" class="space-y-6">
+        <div v-if="step === 3" class="space-y-6">
           <div>
             <label for="docker_username" class="block text-sm font-medium text-gray-400">Docker Hub Username (optional)</label>
             <UInput
@@ -175,7 +172,7 @@
         </div>
 
         <!-- Step 5: Advanced Settings -->
-        <div v-if="step === 5" class="space-y-6">
+        <div v-if="step === 4" class="space-y-6">
           <div>
             <label for="check_interval" class="block text-sm font-medium text-gray-400">Check Interval (seconds)</label>
             <UInput
@@ -198,7 +195,7 @@
 
         <div class="flex justify-between mt-8">
           <UButton
-            v-if="step > 1"
+            v-if="step > 0"
             @click="step--"
             color="gray"
           >
@@ -207,7 +204,7 @@
           <div v-else></div>
 
           <UButton
-            v-if="step < steps.length"
+            v-if="step < steps.length - 1"
             @click="nextStep"
             color="primary"
           >
@@ -281,7 +278,7 @@ const steps = [
   { title: 'Advanced Settings', description: 'Configure additional options' }
 ];
 
-const step = ref(1);
+const step = ref(0);
 const selectedService = ref(null);
 const error = ref('');
 const loading = ref(false);
@@ -310,7 +307,7 @@ const settings = reactive({
 // Function to proceed to next step
 async function nextStep() {
   // Validate current step
-  if (step.value === 1) {
+  if (step.value === 0) {
     // Validate admin user creation
     if (!adminUser.username) {
       error.value = 'Please enter a username';
@@ -343,7 +340,7 @@ async function nextStep() {
       return;
     }
   }
-  else if (step.value === 2) {
+  else if (step.value === 1) {
     if (!selectedService.value) {
       error.value = 'Please select a notification service';
       return;
