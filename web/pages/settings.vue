@@ -16,12 +16,30 @@
           <!-- NTFY -->
           <div>
             <h3 class="text-lg font-medium mb-2">NTFY</h3>
-            <UInput
-              v-model="settings.ntfy_url"
-              label="NTFY URL"
-              placeholder="https://ntfy.sh/your-topic"
-              class="w-full"
-            />
+            <div class="space-y-2">
+              <UInput
+                v-model="settings.ntfy_url"
+                label="NTFY URL"
+                placeholder="https://ntfy.sh/your-topic"
+                class="w-full"
+              />
+              <UInput
+                v-model="settings.ntfy_username"
+                label="NTFY Username"
+                placeholder="username"
+                class="w-full"
+              />
+              <UInput
+                v-model="settings.ntfy_password"
+                label="NTFY Password"
+                type="password"
+                placeholder="********"
+                class="w-full"
+              />
+              <p class="mt-1 text-xs text-gray-500">
+                Username and password will be used to generate the auth.txt file
+              </p>
+            </div>
           </div>
 
           <!-- Discord -->
@@ -175,6 +193,8 @@ onMounted(async () => {
 
 const settings = reactive({
   ntfy_url: '',
+  ntfy_username: '',
+  ntfy_password: '',
   github_token: '',
   docker_username: '',
   docker_password: '',
@@ -211,6 +231,15 @@ async function loadSettings() {
     if (data.success && data.data) {
       // Update settings with loaded values
       Object.assign(settings, data.data);
+      
+      // Parse NTFY auth string if it exists
+      if (data.data.auth) {
+        const authParts = data.data.auth.split(':');
+        if (authParts.length === 2) {
+          settings.ntfy_username = authParts[0];
+          settings.ntfy_password = authParts[1];
+        }
+      }
     }
   } catch (err) {
     error.value = err.message || 'An error occurred while loading settings';
@@ -232,6 +261,13 @@ async function saveSettings() {
       ...settings,
       last_updated: now
     };
+
+    // Format NTFY auth if credentials are provided
+    if (settings.ntfy_url && settings.ntfy_username && settings.ntfy_password) {
+      // Create auth string in the format expected by the backend
+      const authString = `${settings.ntfy_username}:${settings.ntfy_password}`;
+      settingsData.auth = authString;
+    }
 
     // Send settings to server
     const response = await fetch('/settings', {
@@ -256,4 +292,3 @@ async function saveSettings() {
   }
 }
 </script>
-
