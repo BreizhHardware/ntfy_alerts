@@ -254,31 +254,27 @@ const route = useRoute();
 // Check if admin exists and redirect accordingly
 onMounted(async () => {
   try {
-    // Check if force parameter is present in the URL
-    const forceOnboarding = route.query.force === 'true';
-
-    // If forcing onboarding and user is authenticated as admin, allow access
-    if (forceOnboarding && auth.isAuthenticated.value && auth.isAdmin.value) {
-      // Load existing settings if available
-      await loadExistingSettings();
-      return;
-    }
-
-    // Otherwise check if admin exists
+    // Check if admin exists
     const response = await fetch('/is_configured');
     if (response.ok) {
       const data = await response.json();
       const adminExists = data.data && data.data.admin_exists;
 
       // If admin exists, redirect to login or dashboard
+      // This ensures onboarding can only be done once
       if (adminExists) {
         if (auth.isAuthenticated.value) {
           router.push('/');
         } else {
           router.push('/login');
         }
+        return;
       }
     }
+
+    // Only load existing settings if we're continuing with onboarding
+    // (only happens when no admin exists yet)
+    await loadExistingSettings();
   } catch (err) {
     console.error('Error checking configuration:', err);
   }
