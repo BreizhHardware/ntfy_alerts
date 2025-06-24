@@ -1,7 +1,9 @@
 <template>
   <header class="py-6 bg-emerald-950 shadow-lg rounded-b-lg mb-4">
     <div class="container mx-auto px-4 flex justify-between items-center">
-      <h1 class="text-4xl font-bold tracking-wide text-white">Github Ntfy</h1>
+      <NuxtLink to="/" class="text-white hover:text-gray-200 transition-colors duration-200">
+        <h1 class="text-4xl font-bold tracking-wide">Github Ntfy</h1>
+      </NuxtLink>
 
       <div v-if="auth.isAuthenticated" class="flex space-x-3">
         <UButton

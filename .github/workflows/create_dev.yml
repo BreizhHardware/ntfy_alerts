@@ -95,7 +95,7 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
 
-      - name: Configurer Docker
+      - name: Configurer Docker Buildx
         uses: docker/setup-buildx-action@v3
 
       - name: Login Docker Hub
@@ -104,7 +104,7 @@ jobs:
           username: ${{ secrets.DOCKER_USERNAME }}
           password: ${{ secrets.DOCKER_PASSWORD }}
 
-      - name: Télécharger l'exécutable binaire
+      - name: Télécharger le binaire
         uses: actions/download-artifact@v4
         with:
           name: github-ntfy
