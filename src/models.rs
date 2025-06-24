@@ -83,6 +83,7 @@ pub struct AppSettings {
     pub discord_webhook_url: Option<String>,
     pub slack_webhook_url: Option<String>,
     pub check_interval: Option<i64>,
+    pub auth: Option<String>,
     pub last_updated: chrono::DateTime<chrono::Utc>,
 }
 

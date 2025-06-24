@@ -70,6 +70,7 @@ pub fn init_databases() -> SqliteResult<(Connection, Connection)> {
             discord_webhook_url TEXT,
             slack_webhook_url TEXT,
             check_interval INTEGER DEFAULT 3600,
+            auth TEXT,
             last_updated TEXT NOT NULL
         )",
         [],
@@ -319,7 +320,7 @@ pub fn get_app_settings(conn: &Connection) -> SqliteResult<Option<AppSettings>> 
     let mut stmt = conn.prepare(
         "SELECT id, ntfy_url, github_token, docker_username, docker_password,
                 gotify_url, gotify_token, discord_webhook_url, slack_webhook_url,
-                check_interval, last_updated
+                check_interval, auth, last_updated
          FROM app_settings
          WHERE id = 1"
     )?;
@@ -337,7 +338,8 @@ pub fn get_app_settings(conn: &Connection) -> SqliteResult<Option<AppSettings>> 
         let discord_webhook_url = row.get(7)?;
         let slack_webhook_url = row.get(8)?;
         let check_interval = row.get(9)?;
-        let last_updated_str: String = row.get(10)?;
+        let auth = row.get(10)?;
+        let last_updated_str: String = row.get(11)?;
         let last_updated = chrono::DateTime::parse_from_rfc3339(&last_updated_str)
             .map(|dt| dt.with_timezone(&Utc))
             .map_err(|e| {
@@ -358,6 +360,7 @@ pub fn get_app_settings(conn: &Connection) -> SqliteResult<Option<AppSettings>> 
             discord_webhook_url,
             slack_webhook_url,
             check_interval,
+            auth,
             last_updated,
         }))
     } else {
@@ -372,7 +375,7 @@ pub fn update_app_settings(conn: &Connection, settings: &AppSettings) -> SqliteR
         "UPDATE app_settings
          SET ntfy_url = ?, github_token = ?, docker_username = ?, docker_password = ?,
              gotify_url = ?, gotify_token = ?, discord_webhook_url = ?, slack_webhook_url = ?,
-             check_interval = ?, last_updated = ?
+             check_interval = ?, auth = ?, last_updated = ?
          WHERE id = 1",
         rusqlite::params![
             settings.ntfy_url,
@@ -384,9 +387,21 @@ pub fn update_app_settings(conn: &Connection, settings: &AppSettings) -> SqliteR
             settings.discord_webhook_url,
             settings.slack_webhook_url,
             settings.check_interval,
+            settings.auth,
             now
         ],
     )?;
+
+    // If auth credentials are provided, write them to the auth.txt file
+    if let Some(auth) = &settings.auth {
+        if !auth.is_empty() {
+            if let Err(e) = std::fs::write("/auth.txt", auth) {
+                log::error!("Error writing to auth.txt file: {}", e);
+            } else {
+                log::info!("Successfully updated auth.txt file");
+            }
+        }
+    }
 
     Ok(())
 }

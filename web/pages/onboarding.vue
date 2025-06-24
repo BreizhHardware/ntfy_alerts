@@ -62,7 +62,7 @@
             <label class="block text-sm font-medium text-gray-400 mb-2">Main notification service</label>
             <USelect
               v-model="selectedService"
-              :options="notificationServices"
+              :items="notificationServices"
               placeholder="Select a notification service"
             />
           </div>
@@ -77,6 +77,28 @@
                 placeholder="https://ntfy.sh/your-topic"
                 class="w-full"
               />
+            </div>
+            <div>
+              <label for="ntfy_username" class="block text-sm font-medium text-gray-400">NTFY Username</label>
+              <UInput
+                id="ntfy_username"
+                v-model="settings.ntfy_username"
+                placeholder="username"
+                class="w-full"
+              />
+            </div>
+            <div>
+              <label for="ntfy_password" class="block text-sm font-medium text-gray-400">NTFY Password</label>
+              <UInput
+                id="ntfy_password"
+                v-model="settings.ntfy_password"
+                type="password"
+                placeholder="********"
+                class="w-full"
+              />
+              <p class="mt-1 text-xs text-gray-500">
+                Username and password will be used to generate the auth.txt file
+              </p>
             </div>
           </div>
 
@@ -294,6 +316,8 @@ const notificationServices = [
 // Application settings
 const settings = reactive({
   ntfy_url: '',
+  ntfy_username: '',
+  ntfy_password: '',
   github_token: '',
   docker_username: '',
   docker_password: '',
@@ -350,6 +374,9 @@ async function nextStep() {
     if (selectedService.value === 'ntfy' && !settings.ntfy_url) {
       error.value = 'Please enter the NTFY URL';
       return;
+    } else if (selectedService.value === 'ntfy' && (!settings.ntfy_username || !settings.ntfy_password)) {
+      error.value = 'Please enter both NTFY username and password';
+      return;
     } else if (selectedService.value === 'discord' && !settings.discord_webhook_url) {
       error.value = 'Please enter the Discord webhook URL';
       return;
@@ -378,6 +405,13 @@ async function saveSettings() {
       ...settings,
       last_updated: now
     };
+
+    // Format NTFY auth if credentials are provided
+    if (selectedService.value === 'ntfy' && settings.ntfy_username && settings.ntfy_password) {
+      // Create auth string in the format expected by the backend
+      const authString = `${settings.ntfy_username}:${settings.ntfy_password}`;
+      settingsData.auth = authString;
+    }
 
     // Send settings to server
     const response = await fetch('/settings', {
@@ -424,6 +458,15 @@ async function loadExistingSettings() {
         if (existingSettings.ntfy_url) {
           selectedService.value = 'ntfy';
           settings.ntfy_url = existingSettings.ntfy_url;
+          
+          // Parse auth string if it exists (format: username:password)
+          if (existingSettings.auth) {
+            const authParts = existingSettings.auth.split(':');
+            if (authParts.length === 2) {
+              settings.ntfy_username = authParts[0];
+              settings.ntfy_password = authParts[1];
+            }
+          }
         } else if (existingSettings.discord_webhook_url) {
           selectedService.value = 'discord';
           settings.discord_webhook_url = existingSettings.discord_webhook_url;
