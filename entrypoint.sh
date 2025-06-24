@@ -3,7 +3,7 @@
 # Check if USERNAME and PASSWORD environment variables are defined
 if [ -n "$USERNAME" ] && [ -n "$PASSWORD" ]; then
   # Generate auth.txt file content from environment variables
-  echo -n "$USERNAME:$PASSWORD" | base64 > /auth.txt
+  echo -n "$USERNAME:$PASSWORD" > /auth.txt
   echo "Authentication file generated from environment variables"
 else
   echo "USERNAME and/or PASSWORD variables not defined"
