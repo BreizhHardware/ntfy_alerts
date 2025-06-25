@@ -54,7 +54,7 @@ async function addRepo() {
   if (!repoName.value) return
 
   try {
-    const response = await fetch('/app_repo', {
+    const response = await fetch('/app_github_repo', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json'
