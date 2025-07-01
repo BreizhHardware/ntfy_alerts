@@ -22,5 +22,5 @@ dotenv = "0.15"
 chrono = { version = "0.4", features = ["serde"] }
 warp = "0.3"
 openssl = { version = "0.10", features = ["vendored"] }
-rand = "0.8"
+rand = "0.9"
 bcrypt = "0.17"
