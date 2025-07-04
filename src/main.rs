@@ -57,7 +57,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
                 now
             ],
         ).ok();
-        info!("Configuration mise à jour depuis les variables d'environnement");
+        info!("Configuration updated from environment variables");
     }
 
     // Load configuration from database, with fallback to environment variables
