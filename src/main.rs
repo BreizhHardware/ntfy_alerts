@@ -30,7 +30,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     // Initialize databases
     let (conn_versions, conn_repos) = database::init_databases()?;
 
-    // For load the env variable
+    // Load environment variables
     let env_config = config::Config::from_env();
 
     let has_env_notification = env_config.ntfy_url.is_some() ||
