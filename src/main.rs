@@ -56,7 +56,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
                 env_config.timeout as i64,
                 now
             ],
-        ).ok();
+        ).map_err(|e| error!("Failed to update app settings in the database: {}", e)).ok();
         info!("Configuration updated from environment variables");
     }
 
