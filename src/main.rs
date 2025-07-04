@@ -30,26 +30,62 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     // Initialize databases
     let (conn_versions, conn_repos) = database::init_databases()?;
 
+    // For load the env variable
+    let env_config = config::Config::from_env();
+
+    let has_env_notification = env_config.ntfy_url.is_some() ||
+                               env_config.gotify_url.is_some() ||
+                               env_config.discord_webhook_url.is_some() ||
+                               env_config.slack_webhook_url.is_some();
+
+    if has_env_notification {
+        let now = chrono::Utc::now().to_rfc3339();
+        conn_versions.execute(
+            "INSERT OR REPLACE INTO app_settings (id, ntfy_url, github_token, docker_username, docker_password,
+             gotify_url, gotify_token, discord_webhook_url, slack_webhook_url, check_interval, last_updated)
+             VALUES (1, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
+            rusqlite::params![
+                env_config.ntfy_url,
+                env_config.github_token,
+                env_config.docker_username,
+                env_config.docker_password,
+                env_config.gotify_url,
+                env_config.gotify_token,
+                env_config.discord_webhook_url,
+                env_config.slack_webhook_url,
+                env_config.timeout as i64,
+                now
+            ],
+        ).ok();
+        info!("Configuration mise à jour depuis les variables d'environnement");
+    }
+
     // Load configuration from database, with fallback to environment variables
     let config = config::Config::from_database(&conn_versions);
 
-    // Start the REST API
-    start_api();
+    // Check if configuration is complete
+    let config_is_incomplete = config.auth.is_empty() || (config.ntfy_url.is_none() && config.gotify_url.is_none()
+        && config.discord_webhook_url.is_none() && config.slack_webhook_url.is_none());
 
     let client = reqwest::Client::new();
 
-    // Check if configuration is complete
-    if config.auth.is_empty() || (config.ntfy_url.is_none() && config.gotify_url.is_none()
-        && config.discord_webhook_url.is_none() && config.slack_webhook_url.is_none()) {
+    // Now handle incomplete configuration
+    if config_is_incomplete {
         info!("No notification service is configured.");
         info!("Please configure at least one notification service via the web interface or environment variables.");
-        info!("The REST API is still available for configuration.");
+        info!("Starting the REST API for configuration.");
+
+        // Start the REST API only if configuration is incomplete
+        start_api();
 
         // Continue running to allow configuration through the API
         loop {
             thread::sleep(Duration::from_secs(60));
         }
     }
+
+    // Start the REST API only if configuration is complete
+    start_api();
 
     info!("Starting version monitoring...");
 
