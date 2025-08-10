@@ -150,7 +150,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         let github_releases = github::get_latest_releases(&github_repos, &client, config.github_headers()).await;
         let docker_releases = docker::get_latest_docker_releases(&docker_repos, &client, config.docker_headers()).await;
 
-        notifications::send_notifications(github_releases, docker_releases, &config, &conn_versions).await;
+        let _ = notifications::send_notifications(github_releases, docker_releases, &config, &conn_versions).await;
 
         tokio::time::sleep(Duration::from_secs_f64(config.timeout)).await;
     }

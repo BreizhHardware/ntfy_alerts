@@ -483,7 +483,7 @@ async fn delete_docker_repo(body: RepoRequest, db: Arc<Mutex<Connection>>) -> Re
 
 async fn get_latest_updates(db: Arc<Mutex<Connection>>) -> Result<impl Reply, Rejection> {
     let updates = {
-        let db_guard = db.lock().await;
+        let _db_guard = db.lock().await;
 
         let db_path = env::var("DB_PATH").unwrap_or_else(|_| "/github-ntfy".to_string());
         let versions_path = format!("{}/ghntfy_versions.db", db_path);
