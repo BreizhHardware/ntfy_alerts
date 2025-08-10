@@ -33,6 +33,8 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     // Load environment variables
     let env_config = config::Config::from_env();
 
+    // Only update database with env vars if they are explicitly set
+    // We check each field individually instead of overwriting everything
     let has_env_notification = env_config.ntfy_url.is_some() ||
                                env_config.gotify_url.is_some() ||
                                env_config.discord_webhook_url.is_some() ||
@@ -40,24 +42,76 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
 
     if has_env_notification {
         let now = chrono::Utc::now().to_rfc3339();
+
+        // First, ensure there's a record in the database
         conn_versions.execute(
-            "INSERT OR REPLACE INTO app_settings (id, ntfy_url, github_token, docker_username, docker_password,
-             gotify_url, gotify_token, discord_webhook_url, slack_webhook_url, check_interval, last_updated)
-             VALUES (1, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
-            rusqlite::params![
-                env_config.ntfy_url,
-                env_config.github_token,
-                env_config.docker_username,
-                env_config.docker_password,
-                env_config.gotify_url,
-                env_config.gotify_token,
-                env_config.discord_webhook_url,
-                env_config.slack_webhook_url,
-                env_config.timeout as i64,
-                now
-            ],
-        ).map_err(|e| error!("Failed to update app settings in the database: {}", e)).ok();
-        info!("Configuration updated from environment variables");
+            "INSERT OR IGNORE INTO app_settings (id, last_updated) VALUES (1, ?)",
+            rusqlite::params![now],
+        ).map_err(|e| error!("Failed to initialize app settings: {}", e)).ok();
+
+        // Then update only the fields that are set in environment variables
+        if let Some(ntfy_url) = &env_config.ntfy_url {
+            conn_versions.execute(
+                "UPDATE app_settings SET ntfy_url = ?, last_updated = ? WHERE id = 1",
+                rusqlite::params![ntfy_url, now],
+            ).ok();
+        }
+
+        if let Some(github_token) = &env_config.github_token {
+            conn_versions.execute(
+                "UPDATE app_settings SET github_token = ?, last_updated = ? WHERE id = 1",
+                rusqlite::params![github_token, now],
+            ).ok();
+        }
+
+        if let Some(docker_username) = &env_config.docker_username {
+            conn_versions.execute(
+                "UPDATE app_settings SET docker_username = ?, last_updated = ? WHERE id = 1",
+                rusqlite::params![docker_username, now],
+            ).ok();
+        }
+
+        if let Some(docker_password) = &env_config.docker_password {
+            conn_versions.execute(
+                "UPDATE app_settings SET docker_password = ?, last_updated = ? WHERE id = 1",
+                rusqlite::params![docker_password, now],
+            ).ok();
+        }
+
+        if let Some(gotify_url) = &env_config.gotify_url {
+            conn_versions.execute(
+                "UPDATE app_settings SET gotify_url = ?, last_updated = ? WHERE id = 1",
+                rusqlite::params![gotify_url, now],
+            ).ok();
+        }
+
+        if let Some(gotify_token) = &env_config.gotify_token {
+            conn_versions.execute(
+                "UPDATE app_settings SET gotify_token = ?, last_updated = ? WHERE id = 1",
+                rusqlite::params![gotify_token, now],
+            ).ok();
+        }
+
+        if let Some(discord_webhook_url) = &env_config.discord_webhook_url {
+            conn_versions.execute(
+                "UPDATE app_settings SET discord_webhook_url = ?, last_updated = ? WHERE id = 1",
+                rusqlite::params![discord_webhook_url, now],
+            ).ok();
+        }
+
+        if let Some(slack_webhook_url) = &env_config.slack_webhook_url {
+            conn_versions.execute(
+                "UPDATE app_settings SET slack_webhook_url = ?, last_updated = ? WHERE id = 1",
+                rusqlite::params![slack_webhook_url, now],
+            ).ok();
+        }
+
+        conn_versions.execute(
+            "UPDATE app_settings SET check_interval = ?, last_updated = ? WHERE id = 1",
+            rusqlite::params![env_config.timeout as i64, now],
+        ).ok();
+
+        info!("Configuration updated from environment variables (selective update)");
     }
 
     // Load configuration from database, with fallback to environment variables
