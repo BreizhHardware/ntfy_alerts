@@ -14,6 +14,7 @@ pub struct GithubRelease {
 #[derive(Debug, Clone)]
 pub struct GithubReleaseInfo {
     pub repo: String,
+    #[allow(dead_code)]
     pub name: String,
     pub tag_name: String,
     pub html_url: String,
@@ -36,6 +37,7 @@ pub struct DockerReleaseInfo {
     pub published_at: String,
 }
 
+#[allow(dead_code)]
 pub struct NotifiedRelease {
     pub repo: String,
     pub tag_name: String,
