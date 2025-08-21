@@ -12,7 +12,8 @@ use crate::database::{
     get_user_by_username, verify_password, create_user, create_session,
     get_session, delete_session, get_app_settings, update_app_settings
 };
-use crate::models::{UserLogin, UserRegistration, AuthResponse, ApiResponse, AppSettings};
+use crate::models::{UserLogin, UserRegistration, AuthResponse, ApiResponse, AppSettings, GithubReleaseInfo};
+use crate::notifications::{ntfy, discord, slack, gotify};
 
 #[derive(Debug, Serialize, Deserialize)]
 struct RepoRequest {
@@ -128,6 +129,35 @@ pub async fn start_api() -> Result<(), Box<dyn std::error::Error + Send + Sync>>
                 .and(with_db(versions_db.clone()))
                 .and_then(is_configured);
 
+            // Test notification routes
+            let test_ntfy_route = warp::path("test")
+                .and(warp::path("ntfy"))
+                .and(warp::post())
+                .and(with_db(versions_db.clone()))
+                .and(with_auth())
+                .and_then(test_ntfy_notification);
+
+            let test_discord_route = warp::path("test")
+                .and(warp::path("discord"))
+                .and(warp::post())
+                .and(with_db(versions_db.clone()))
+                .and(with_auth())
+                .and_then(test_discord_notification);
+
+            let test_slack_route = warp::path("test")
+                .and(warp::path("slack"))
+                .and(warp::post())
+                .and(with_db(versions_db.clone()))
+                .and(with_auth())
+                .and_then(test_slack_notification);
+
+            let test_gotify_route = warp::path("test")
+                .and(warp::path("gotify"))
+                .and(warp::post())
+                .and(with_db(versions_db.clone()))
+                .and(with_auth())
+                .and_then(test_gotify_notification);
+
             // Configure CORS
             let cors = warp::cors()
                 .allow_any_origin()
@@ -148,6 +178,10 @@ pub async fn start_api() -> Result<(), Box<dyn std::error::Error + Send + Sync>>
                 .or(get_settings_route)
                 .or(update_settings_route)
                 .or(is_configured_route)
+                .or(test_ntfy_route)
+                .or(test_discord_route)
+                .or(test_slack_route)
+                .or(test_gotify_route)
                 .with(cors);
 
             // Start the server
@@ -871,4 +905,358 @@ async fn is_configured(db: Arc<Mutex<Connection>>) -> Result<impl Reply, Rejecti
         }),
         StatusCode::OK,
     ))
+}
+
+async fn test_ntfy_notification(db: Arc<Mutex<Connection>>, token: String) -> Result<impl Reply, Rejection> {
+    let conn = db.lock().await;
+
+    // Verify authentication
+    if let Ok(Some(session)) = get_session(&conn, &token) {
+        if session.expires_at < Utc::now() {
+            return Ok(warp::reply::with_status(
+                warp::reply::json(&ApiResponse::<()> {
+                    success: false,
+                    message: "Session expired".to_string(),
+                    data: None,
+                }),
+                StatusCode::UNAUTHORIZED,
+            ));
+        }
+
+        // Retrieve settings
+        match get_app_settings(&conn) {
+            Ok(Some(settings)) => {
+                if let Some(ntfy_url) = &settings.ntfy_url {
+                    // Send a test notification
+                    let result = ntfy::send_notification(
+                        ntfy_url,
+                        "Test Notification",
+                        "Ceci est une notification de test depuis l'API GitHub-NTFY.",
+                    ).await;
+
+                    match result {
+                        Ok(_) => {
+                            Ok(warp::reply::with_status(
+                                warp::reply::json(&ApiResponse::<()> {
+                                    success: true,
+                                    message: "Test notification sent successfully".to_string(),
+                                    data: None,
+                                }),
+                                StatusCode::OK,
+                            ))
+                        },
+                        Err(e) => {
+                            error!("Error sending notification: {}", e);
+                            Ok(warp::reply::with_status(
+                                warp::reply::json(&ApiResponse::<()> {
+                                    success: false,
+                                    message: format!("Error sending notification: {}", e),
+                                    data: None,
+                                }),
+                                StatusCode::INTERNAL_SERVER_ERROR,
+                            ))
+                        }
+                    }
+                } else {
+                    Ok(warp::reply::with_status(
+                        warp::reply::json(&ApiResponse::<()> {
+                            success: false,
+                            message: "NTFY URL not configured".to_string(),
+                            data: None,
+                        }),
+                        StatusCode::BAD_REQUEST,
+                    ))
+                }
+            },
+            Ok(None) => {
+                Ok(warp::reply::with_status(
+                    warp::reply::json(&ApiResponse::<()> {
+                        success: false,
+                        message: "No settings found".to_string(),
+                        data: None,
+                    }),
+                    StatusCode::NOT_FOUND,
+                ))
+            },
+            Err(_) => {
+                Ok(warp::reply::with_status(
+                    warp::reply::json(&ApiResponse::<()> {
+                        success: false,
+                        message: "Error retrieving settings".to_string(),
+                        data: None,
+                    }),
+                    StatusCode::INTERNAL_SERVER_ERROR,
+                ))
+            }
+        }
+    } else {
+        Ok(warp::reply::with_status(
+            warp::reply::json(&ApiResponse::<()> {
+                success: false,
+                message: "Unauthorized".to_string(),
+                data: None,
+            }),
+            StatusCode::UNAUTHORIZED,
+        ))
+    }
+}
+
+async fn test_discord_notification(db: Arc<Mutex<Connection>>, token: String) -> Result<impl Reply, Rejection> {
+    let conn = db.lock().await;
+
+    // Verify authentication
+    if let Ok(Some(session)) = get_session(&conn, &token) {
+        if session.expires_at < Utc::now() {
+            return Ok(warp::reply::with_status(
+                warp::reply::json(&ApiResponse::<()> {
+                    success: false,
+                    message: "Session expired".to_string(),
+                    data: None,
+                }),
+                StatusCode::UNAUTHORIZED,
+            ));
+        }
+
+        // Retrieve settings
+        match get_app_settings(&conn) {
+            Ok(Some(settings)) => {
+                if let Some(webhook_url) = &settings.discord_webhook_url {
+                    // Send a test notification
+                    let result = discord::send_notification(
+                        webhook_url,
+                        "Test Notification",
+                        "Ceci est une notification de test depuis l'API GitHub-NTFY.",
+                    ).await;
+
+                    match result {
+                        Ok(_) => {
+                            Ok(warp::reply::with_status(
+                                warp::reply::json(&ApiResponse::<()> {
+                                    success: true,
+                                    message: "Test notification sent successfully".to_string(),
+                                    data: None,
+                                }),
+                                StatusCode::OK,
+                            ))
+                        },
+                        Err(e) => {
+                            error!("Error sending notification: {}", e);
+                            Ok(warp::reply::with_status(
+                                warp::reply::json(&ApiResponse::<()> {
+                                    success: false,
+                                    message: format!("Error sending notification: {}", e),
+                                    data: None,
+                                }),
+                                StatusCode::INTERNAL_SERVER_ERROR,
+                            ))
+                        }
+                    }
+                } else {
+                    Ok(warp::reply::with_status(
+                        warp::reply::json(&ApiResponse::<()> {
+                            success: false,
+                            message: "Discord webhook URL not configured".to_string(),
+                            data: None,
+                        }),
+                        StatusCode::BAD_REQUEST,
+                    ))
+                }
+            },
+            Ok(None) => {
+                Ok(warp::reply::with_status(
+                    warp::reply::json(&ApiResponse::<()> {
+                        success: false,
+                        message: "No settings found".to_string(),
+                        data: None,
+                    }),
+                    StatusCode::NOT_FOUND,
+                ))
+            },
+            Err(_) => {
+                Ok(warp::reply::with_status(
+                    warp::reply::json(&ApiResponse::<()> {
+                        success: false,
+                        message: "Error retrieving settings".to_string(),
+                        data: None,
+                    }),
+                    StatusCode::INTERNAL_SERVER_ERROR,
+                ))
+            }
+        }
+    } else {
+        Ok(warp::reply::with_status(
+            warp::reply::json(&ApiResponse::<()> {
+                success: false,
+                message: "Unauthorized".to_string(),
+                data: None,
+            }),
+            StatusCode::UNAUTHORIZED,
+        ))
+    }
+}
+
+async fn test_slack_notification(db: Arc<Mutex<Connection>>, token: String) -> Result<impl Reply, Rejection> {
+    let conn = db.lock().await;
+
+    // Verify authentication
+    if let Ok(Some(session)) = get_session(&conn, &token) {
+        if session.expires_at < Utc::now() {
+            return Ok(warp::reply::with_status(
+                warp::reply::json(&ApiResponse::<()> {
+                    success: false,
+                    message: "Session expired".to_string(),
+                    data: None,
+                }),
+                StatusCode::UNAUTHORIZED,
+            ));
+        }
+
+        // Retrieve settings
+        match get_app_settings(&conn) {
+            Ok(Some(settings)) => {
+                // Send a test notification
+                let result = slack::send_notification(
+                    &settings.slack_webhook_url,
+                    "Test Notification",
+                    "Ceci est une notification de test depuis l'API GitHub-NTFY.",
+                ).await;
+
+                match result {
+                    Ok(_) => {
+                        Ok(warp::reply::with_status(
+                            warp::reply::json(&ApiResponse::<()> {
+                                success: true,
+                                message: "Test notification sent successfully".to_string(),
+                                data: None,
+                            }),
+                            StatusCode::OK,
+                        ))
+                    },
+                    Err(e) => {
+                        error!("Error sending notification: {}", e);
+                        Ok(warp::reply::with_status(
+                            warp::reply::json(&ApiResponse::<()> {
+                                success: false,
+                                message: format!("Error sending notification: {}", e),
+                                data: None,
+                            }),
+                            StatusCode::INTERNAL_SERVER_ERROR,
+                        ))
+                    }
+                }
+            },
+            Ok(None) => {
+                Ok(warp::reply::with_status(
+                    warp::reply::json(&ApiResponse::<()> {
+                        success: false,
+                        message: "No settings found".to_string(),
+                        data: None,
+                    }),
+                    StatusCode::NOT_FOUND,
+                ))
+            },
+            Err(_) => {
+                Ok(warp::reply::with_status(
+                    warp::reply::json(&ApiResponse::<()> {
+                        success: false,
+                        message: "Error retrieving settings".to_string(),
+                        data: None,
+                    }),
+                    StatusCode::INTERNAL_SERVER_ERROR,
+                ))
+            }
+        }
+    } else {
+        Ok(warp::reply::with_status(
+            warp::reply::json(&ApiResponse::<()> {
+                success: false,
+                message: "Unauthorized".to_string(),
+                data: None,
+            }),
+            StatusCode::UNAUTHORIZED,
+        ))
+    }
+}
+
+async fn test_gotify_notification(db: Arc<Mutex<Connection>>, token: String) -> Result<impl Reply, Rejection> {
+    let conn = db.lock().await;
+
+    // Verify authentication
+    if let Ok(Some(session)) = get_session(&conn, &token) {
+        if session.expires_at < Utc::now() {
+            return Ok(warp::reply::with_status(
+                warp::reply::json(&ApiResponse::<()> {
+                    success: false,
+                    message: "Session expired".to_string(),
+                    data: None,
+                }),
+                StatusCode::UNAUTHORIZED,
+            ));
+        }
+
+        // Retrieve settings
+        match get_app_settings(&conn) {
+            Ok(Some(settings)) => {
+                // Send a test notification
+                let result = gotify::send_notification(
+                    &settings.gotify_url,
+                    "Test Notification",
+                    "Ceci est une notification de test depuis l'API GitHub-NTFY.",
+                ).await;
+
+                match result {
+                    Ok(_) => {
+                        Ok(warp::reply::with_status(
+                            warp::reply::json(&ApiResponse::<()> {
+                                success: true,
+                                message: "Test notification sent successfully".to_string(),
+                                data: None,
+                            }),
+                            StatusCode::OK,
+                        ))
+                    },
+                    Err(e) => {
+                        error!("Error sending notification: {}", e);
+                        Ok(warp::reply::with_status(
+                            warp::reply::json(&ApiResponse::<()> {
+                                success: false,
+                                message: format!("Error sending notification: {}", e),
+                                data: None,
+                            }),
+                            StatusCode::INTERNAL_SERVER_ERROR,
+                        ))
+                    }
+                }
+            },
+            Ok(None) => {
+                Ok(warp::reply::with_status(
+                    warp::reply::json(&ApiResponse::<()> {
+                        success: false,
+                        message: "No settings found".to_string(),
+                        data: None,
+                    }),
+                    StatusCode::NOT_FOUND,
+                ))
+            },
+            Err(_) => {
+                Ok(warp::reply::with_status(
+                    warp::reply::json(&ApiResponse::<()> {
+                        success: false,
+                        message: "Error retrieving settings".to_string(),
+                        data: None,
+                    }),
+                    StatusCode::INTERNAL_SERVER_ERROR,
+                ))
+            }
+        }
+    } else {
+        Ok(warp::reply::with_status(
+            warp::reply::json(&ApiResponse::<()> {
+                success: false,
+                message: "Unauthorized".to_string(),
+                data: None,
+            }),
+            StatusCode::UNAUTHORIZED,
+        ))
+    }
 }

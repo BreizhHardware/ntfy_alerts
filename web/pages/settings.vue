@@ -1,6 +1,5 @@
 <template>
   <div>
-    <AppHeader />
 
     <div class="container mx-auto px-4 py-8">
       <h1 class="text-2xl font-bold text-white mb-8">Settings</h1>
@@ -15,7 +14,19 @@
         <div class="space-y-6">
           <!-- NTFY -->
           <div>
-            <h3 class="text-lg font-medium mb-2">NTFY</h3>
+            <div class="flex justify-between items-center mb-2">
+              <h3 class="text-lg font-medium">NTFY</h3>
+              <UButton
+                @click="testNotification('ntfy')"
+                size="sm"
+                color="gray"
+                variant="outline"
+                :loading="testingNotifications.ntfy"
+                :disabled="!settings.ntfy_url"
+              >
+                Tester
+              </UButton>
+            </div>
             <div class="space-y-2">
               <UInput
                 v-model="settings.ntfy_url"
@@ -44,7 +55,19 @@
 
           <!-- Discord -->
           <div>
-            <h3 class="text-lg font-medium mb-2">Discord</h3>
+            <div class="flex justify-between items-center mb-2">
+              <h3 class="text-lg font-medium">Discord</h3>
+              <UButton
+                @click="testNotification('discord')"
+                size="sm"
+                color="gray"
+                variant="outline"
+                :loading="testingNotifications.discord"
+                :disabled="!settings.discord_webhook_url"
+              >
+                Tester
+              </UButton>
+            </div>
             <UInput
               v-model="settings.discord_webhook_url"
               label="Discord Webhook URL"
@@ -55,7 +78,19 @@
 
           <!-- Slack -->
           <div>
-            <h3 class="text-lg font-medium mb-2">Slack</h3>
+            <div class="flex justify-between items-center mb-2">
+              <h3 class="text-lg font-medium">Slack</h3>
+              <UButton
+                @click="testNotification('slack')"
+                size="sm"
+                color="gray"
+                variant="outline"
+                :loading="testingNotifications.slack"
+                :disabled="!settings.slack_webhook_url"
+              >
+                Tester
+              </UButton>
+            </div>
             <UInput
               v-model="settings.slack_webhook_url"
               label="Slack Webhook URL"
@@ -66,7 +101,19 @@
 
           <!-- Gotify -->
           <div>
-            <h3 class="text-lg font-medium mb-2">Gotify</h3>
+            <div class="flex justify-between items-center mb-2">
+              <h3 class="text-lg font-medium">Gotify</h3>
+              <UButton
+                @click="testNotification('gotify')"
+                size="sm"
+                color="gray"
+                variant="outline"
+                :loading="testingNotifications.gotify"
+                :disabled="!settings.gotify_url || !settings.gotify_token"
+              >
+                Tester
+              </UButton>
+            </div>
             <div class="space-y-2">
               <UInput
                 v-model="settings.gotify_url"
@@ -208,6 +255,12 @@ const settings = reactive({
 const error = ref('');
 const success = ref('');
 const loading = ref(false);
+const testingNotifications = reactive({
+  ntfy: false,
+  discord: false,
+  slack: false,
+  gotify: false
+});
 
 // Load current settings
 async function loadSettings() {
@@ -289,6 +342,43 @@ async function saveSettings() {
     error.value = err.message || 'An error occurred while saving settings';
   } finally {
     loading.value = false;
+  }
+}
+
+// Function to test notifications
+async function testNotification(type) {
+  try {
+    // Set loading state for the specific notification type
+    testingNotifications[type] = true;
+    error.value = '';
+    success.value = '';
+
+    // Send test notification via our API endpoint
+    const response = await fetch(`/test/${type}`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': auth.token.value
+      }
+    });
+
+    if (!response.ok) {
+      const data = await response.json();
+      throw new Error(data.message || 'Error sending test notification');
+    }
+
+    const data = await response.json();
+
+    if (data.success) {
+      success.value = `Notification de test envoyée avec succès via ${type.toUpperCase()}`;
+    } else {
+      throw new Error(data.message || 'Error sending test notification');
+    }
+  } catch (err) {
+    error.value = err.message || 'Une erreur est survenue lors de l\'envoi de la notification de test';
+  } finally {
+    // Reset loading state for the specific notification type
+    testingNotifications[type] = false;
   }
 }
 </script>
