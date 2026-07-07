@@ -1,0 +1,41 @@
+{
+  "name": "frontend",
+  "$schema": "../node_modules/nx/schemas/project-schema.json",
+  "sourceRoot": "web",
+  "targets": {
+    "dev": {
+      "executor": "nx:run-commands",
+      "options": {
+        "command": "pnpm dev",
+        "cwd": "{projectRoot}"
+      }
+    },
+    "generate": {
+      "executor": "nx:run-commands",
+      "cache": true,
+      "inputs": ["frontend", "sharedGlobals"],
+      "outputs": ["{projectRoot}/.output/public"],
+      "options": {
+        "command": "pnpm generate",
+        "cwd": "{projectRoot}"
+      }
+    },
+    "build": {
+      "executor": "nx:run-commands",
+      "cache": true,
+      "inputs": ["frontend", "sharedGlobals"],
+      "outputs": ["{projectRoot}/.output"],
+      "options": {
+        "command": "pnpm build",
+        "cwd": "{projectRoot}"
+      }
+    },
+    "preview": {
+      "executor": "nx:run-commands",
+      "options": {
+        "command": "pnpm preview",
+        "cwd": "{projectRoot}"
+      }
+    }
+  }
+}

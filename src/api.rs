@@ -1116,7 +1116,7 @@ async fn test_slack_notification(db: Arc<Mutex<Connection>>, token: String) -> R
             Ok(Some(settings)) => {
                 // Send a test notification
                 let result = slack::send_notification(
-                    &settings.slack_webhook_url,
+                    settings.slack_webhook_url.as_deref().unwrap_or_default(),
                     "Test Notification",
                     "Ceci est une notification de test depuis l'API GitHub-NTFY.",
                 ).await;
@@ -1199,7 +1199,7 @@ async fn test_gotify_notification(db: Arc<Mutex<Connection>>, token: String) -> 
             Ok(Some(settings)) => {
                 // Send a test notification
                 let result = gotify::send_notification(
-                    &settings.gotify_url,
+                    settings.gotify_url.as_deref().unwrap_or_default(),
                     "Test Notification",
                     "Ceci est une notification de test depuis l'API GitHub-NTFY.",
                 ).await;

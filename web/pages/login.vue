@@ -7,7 +7,7 @@
 
     <form @submit.prevent="handleLogin" class="mt-8 space-y-6">
       <div>
-
+        <label for="username" class="block text-sm font-medium text-gray-400">Username</label>
         <input
           id="username"
           v-model="form.username"
@@ -16,10 +16,9 @@
           class="block w-full px-3 py-2 mt-1 text-white placeholder-gray-500 bg-gray-700 border border-gray-600 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
         />
       </div>
-        <div>
       <div>
         <label for="password" class="block text-sm font-medium text-gray-400">Password</label>
-        <div v-if="error" class="p-3 text-sm text-red-500 bg-red-100 rounded-md">
+        <input
           id="password"
           v-model="form.password"
           type="password"
@@ -27,11 +26,9 @@
           class="block w-full px-3 py-2 mt-1 text-white placeholder-gray-500 bg-gray-700 border border-gray-600 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
         />
       </div>
-          {{ error }}
       <div v-if="error" class="p-3 text-sm text-red-500 bg-red-100 rounded-md">
         {{ error }}
       </div>
-          <UButton
       <div>
         <UButton
           type="submit"
@@ -43,7 +40,7 @@
         </UButton>
       </div>
     </form>
-        <p class="text-sm text-gray-400">
+
     <div class="text-center mt-4">
       <p class="text-sm text-gray-400">
         First time?
@@ -51,10 +48,11 @@
           Setup your application
         </NuxtLink>
       </p>
+    </div>
+  </div>
 </template>
 
 <script setup>
-// Utiliser le layout d'authentification
 definePageMeta({
   layout: 'auth'
 })
@@ -77,7 +75,6 @@ async function handleLogin() {
 
     await auth.login(form.username, form.password);
 
-    // Redirect to main page or configuration page if needed
     if (auth.isFirstLogin.value) {
       router.push('/onboarding');
     } else {
