@@ -1,5 +1,5 @@
 <template>
-  <div class="min-h-screen bg-gray-900 p-6">
+  <div class="min-h-screen p-6">
     <div class="max-w-3xl mx-auto bg-gray-800 rounded-lg shadow-lg overflow-hidden">
       <div class="p-6 border-b border-gray-700">
         <h1 class="text-2xl font-bold text-white">Application Setup</h1>
@@ -247,6 +247,11 @@
 </template>
 
 <script setup>
+// Utiliser le layout d'authentification
+definePageMeta({
+  layout: 'auth'
+})
+
 const auth = useAuth();
 const router = useRouter();
 const route = useRoute();

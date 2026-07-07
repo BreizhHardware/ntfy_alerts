@@ -1,0 +1,41 @@
+{
+  "$schema": "./node_modules/nx/schemas/nx-schema.json",
+  "namedInputs": {
+    "sharedGlobals": ["{workspaceRoot}/nx.json"],
+    "rust": [
+      "{workspaceRoot}/src/**/*",
+      "{workspaceRoot}/Cargo.toml",
+      "{workspaceRoot}/Cargo.lock"
+    ],
+    "frontend": [
+      "{workspaceRoot}/web/**/*",
+      "!{workspaceRoot}/web/.nuxt/**/*",
+      "!{workspaceRoot}/web/.output/**/*",
+      "!{workspaceRoot}/web/node_modules/**/*"
+    ],
+    "dockerConfig": [
+      "{workspaceRoot}/Dockerfile",
+      "{workspaceRoot}/Dockerfile.dev",
+      "{workspaceRoot}/nginx.conf",
+      "{workspaceRoot}/entrypoint.sh"
+    ]
+  },
+  "targetDefaults": {
+    "build": {
+      "cache": true
+    },
+    "build-musl": {
+      "cache": true
+    },
+    "test": {
+      "cache": true
+    },
+    "lint": {
+      "cache": true
+    },
+    "generate": {
+      "cache": true
+    }
+  },
+  "defaultProject": "app"
+}

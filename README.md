@@ -29,25 +29,53 @@ services:
     restart: unless-stopped
 ```
 
+### Local development (Nx)
+
+The project uses [Nx](https://nx.dev) to orchestrate builds. Prerequisites: [Docker Desktop](https://www.docker.com/products/docker-desktop/), [Node.js](https://nodejs.org/) and [pnpm](https://pnpm.io/).
+
+```bash
+git clone https://github.com/BreizhHardware/ntfy_alerts.git
+cd ntfy_alerts
+pnpm install
+```
+
+Build and run the dev Docker image (compiles Rust and Nuxt **inside Docker** — no extra tooling needed):
+
+```bash
+pnpm nx run app:docker-dev    # build image github-ntfy-dev:dev
+pnpm nx run app:docker-run    # docker compose up -d
+pnpm nx run app:docker-stop   # docker compose down
+```
+
+Other useful targets:
+
+| Command | Description |
+|---|---|
+| `pnpm nx run frontend:dev` | Nuxt dev server with hot-reload |
+| `pnpm nx run app:build` | Compile Rust backend for the local platform |
+| `pnpm nx run app:test` | Run Rust tests |
+| `pnpm nx run app:lint` | Run Clippy |
+| `pnpm nx run app:docker-build-dev` | CI-style build (requires [`cross`](https://github.com/cross-rs/cross)), uses Nx cache |
+
 ### Manual Installation
 Install Rust if needed
-```BASH
+```bash
 curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh
 ```
 
 Clone the repository
-```BASH
+```bash
 git clone https://github.com/BreizhHardware/ntfy_alerts.git
 cd ntfy_alerts
 ```
 
 Compile
-```BASH
+```bash
 cargo build --release
 ```
 
 Run
-```BASH
+```bash
 ./target/release/github-ntfy
 ```
 

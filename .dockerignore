@@ -1,0 +1,26 @@
+# Node dependencies — installed fresh inside Docker; local ones have broken symlinks
+node_modules/
+web/node_modules/
+
+# Nuxt generated output
+web/.nuxt/
+web/.output/
+
+# Rust build cache
+target/
+
+# Nx cache and workspace data
+.nx/
+
+# Docker staging directory
+docker-build/
+web-output/
+
+# Git and editor files
+.git/
+.gitignore
+.idea/
+
+# Local env files
+.env
+.env.*
