@@ -1,0 +1,8 @@
+{
+  "name": "github-ntfy",
+  "version": "2.0.0",
+  "private": true,
+  "devDependencies": {
+    "nx": "^20.0.0"
+  }
+}

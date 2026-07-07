@@ -1,6 +1,6 @@
 <h1 align="center">Welcome to ntfy_alerts 👋</h1>
 <p>
-  <img alt="Version" src="https://img.shields.io/badge/version-2.0-blue.svg?cacheSeconds=2592000" />
+  <img alt="Version" src="https://img.shields.io/badge/version-2.1-blue.svg?cacheSeconds=2592000" />
   <a href="#" target="_blank">
     <img alt="License: GPL--3" src="https://img.shields.io/badge/License-GPL--3-yellow.svg" />
   </a>
@@ -22,18 +22,6 @@ services:
   github-ntfy:
     image: breizhhardware/github-ntfy:latest
     container_name: github-ntfy
-    environment:
-      - USERNAME=username # Required
-      - PASSWORD=password # Required
-      - NTFY_URL=ntfy_url # Required if ntfy is used
-      - GHNTFY_TIMEOUT=timeout # Default is 3600 (1 hour)
-      - GHNTFY_TOKEN= # Default is empty (Github token)
-      - DOCKER_USERNAME= # Default is empty (Docker Hub username)
-      - DOCKER_PASSWORD= # Default is empty (Docker Hub password)
-      - GOTIFY_URL=gotify_url # Required if gotify is used
-      - GOTIFY_TOKEN= # Required if gotify is used
-      - DISCORD_WEBHOOK_URL= # Required if discord is used
-      - SLACK_WEBHOOK_URL= # Required if Slack is used
     volumes:
       - /path/to/data:/data
     ports:
@@ -41,25 +29,53 @@ services:
     restart: unless-stopped
 ```
 
+### Local development (Nx)
+
+The project uses [Nx](https://nx.dev) to orchestrate builds. Prerequisites: [Docker Desktop](https://www.docker.com/products/docker-desktop/), [Node.js](https://nodejs.org/) and [pnpm](https://pnpm.io/).
+
+```bash
+git clone https://github.com/BreizhHardware/ntfy_alerts.git
+cd ntfy_alerts
+pnpm install
+```
+
+Build and run the dev Docker image (compiles Rust and Nuxt **inside Docker** — no extra tooling needed):
+
+```bash
+pnpm nx run app:docker-dev    # build image github-ntfy-dev:dev
+pnpm nx run app:docker-run    # docker compose up -d
+pnpm nx run app:docker-stop   # docker compose down
+```
+
+Other useful targets:
+
+| Command | Description |
+|---|---|
+| `pnpm nx run frontend:dev` | Nuxt dev server with hot-reload |
+| `pnpm nx run app:build` | Compile Rust backend for the local platform |
+| `pnpm nx run app:test` | Run Rust tests |
+| `pnpm nx run app:lint` | Run Clippy |
+| `pnpm nx run app:docker-build-dev` | CI-style build (requires [`cross`](https://github.com/cross-rs/cross)), uses Nx cache |
+
 ### Manual Installation
 Install Rust if needed
-```BASH
+```bash
 curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh
 ```
 
 Clone the repository
-```BASH
+```bash
 git clone https://github.com/BreizhHardware/ntfy_alerts.git
 cd ntfy_alerts
 ```
 
 Compile
-```BASH
+```bash
 cargo build --release
 ```
 
 Run
-```BASH
+```bash
 ./target/release/github-ntfy
 ```
 
@@ -72,9 +88,9 @@ The GitHub token (GHNTFY_TOKEN) needs to have the following permissions: repo, r
 
 ## TODO
 - [ ] Add support for multi achitecture Docker images
-- [ ] Rework web interface
+- [x] Rework web interface
 - [ ] Add support for more notification services (Telegram, Matrix, etc.)
-- [ ] Add web oneboarding instead of using environment variables
+- [x] Add web oneboarding instead of using environment variables
 
 ## Author
 👤 BreizhHardware

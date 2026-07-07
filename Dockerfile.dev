@@ -1,0 +1,41 @@
+# Stage 1: Build Rust binary inside a Linux container (no cross-compilation tooling needed)
+FROM rust:alpine AS rust-builder
+RUN apk add --no-cache musl-dev pkgconfig perl make
+WORKDIR /build
+COPY Cargo.toml Cargo.lock ./
+COPY src/ ./src/
+RUN cargo build --release --features vendored-openssl
+
+# Stage 2: Build Nuxt static frontend
+FROM node:24-alpine AS node-builder
+RUN npm install -g pnpm@10
+WORKDIR /build
+COPY web/package.json web/pnpm-lock.yaml ./
+# Approve native build scripts — pnpm requires explicit consent outside a workspace
+RUN printf 'allowBuilds:\n  "@parcel/watcher": true\n  "@tailwindcss/oxide": true\n  esbuild: true\n  vue-demi: true\n' > pnpm-workspace.yaml
+RUN pnpm install --frozen-lockfile
+COPY web/ ./
+RUN pnpm generate
+
+# Stage 3: Final minimal image
+FROM alpine:3.22
+RUN apk add --no-cache sqlite-libs openssl nginx
+
+COPY --from=rust-builder /build/target/release/github-ntfy /usr/local/bin/github-ntfy
+COPY --from=node-builder /build/.output/public /var/www/html/
+COPY nginx.conf /etc/nginx/nginx.conf
+COPY entrypoint.sh /app/entrypoint.sh
+
+RUN sed -i 's/\r$//' /app/entrypoint.sh && \
+    chmod +x /usr/local/bin/github-ntfy && \
+    chmod +x /app/entrypoint.sh && \
+    mkdir -p /github-ntfy && \
+    chmod 755 /github-ntfy
+
+ENV DB_PATH=/github-ntfy
+ENV RUST_LOG=info
+
+VOLUME ["/github-ntfy"]
+EXPOSE 5000 80
+
+ENTRYPOINT ["/app/entrypoint.sh"]

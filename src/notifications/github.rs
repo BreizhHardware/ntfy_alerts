@@ -19,6 +19,7 @@ pub async fn send_to_slack(release: GithubReleaseInfo, webhook_url: &str) {
     slack::send_github_notification(&release, webhook_url).await;
 }
 
+#[allow(dead_code)]
 pub async fn send_notifications(releases: &[GithubReleaseInfo], config: &Config) {
     let mut tasks = Vec::new();
 

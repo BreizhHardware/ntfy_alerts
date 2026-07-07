@@ -19,6 +19,7 @@ pub async fn send_to_slack(release: DockerReleaseInfo, webhook_url: &str) {
     slack::send_docker_notification(&release, webhook_url).await;
 }
 
+#[allow(dead_code)]
 pub async fn send_notifications(releases: &[DockerReleaseInfo], config: &Config) {
     let mut tasks = Vec::new();
 

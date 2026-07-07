@@ -13,12 +13,14 @@ vendored-openssl = ["openssl/vendored"]
 [dependencies]
 tokio = { version = "1", features = ["full"] }
 reqwest = { version = "0.12", features = ["json", "blocking"] }
-rusqlite = { version = "0.36", features = ["bundled"] }
+rusqlite = { version = "0.37", features = ["bundled"] }
 serde = { version = "1", features = ["derive"] }
 serde_json = "1"
 log = "0.4"
 env_logger = "0.11"
 dotenv = "0.15"
-chrono = "0.4"
+chrono = { version = "0.4", features = ["serde"] }
 warp = "0.3"
 openssl = { version = "0.10", features = ["vendored"] }
+rand = "0.9"
+bcrypt = "0.17"

@@ -1,0 +1,97 @@
+{
+  "name": "app",
+  "$schema": "./node_modules/nx/schemas/project-schema.json",
+  "targets": {
+    "build": {
+      "executor": "nx:run-commands",
+      "cache": true,
+      "inputs": ["rust", "sharedGlobals"],
+      "outputs": ["{workspaceRoot}/target/release/github-ntfy"],
+      "options": {
+        "command": "cargo build --release"
+      }
+    },
+    "build-musl": {
+      "executor": "nx:run-commands",
+      "cache": true,
+      "inputs": ["rust", "sharedGlobals"],
+      "outputs": [
+        "{workspaceRoot}/target/x86_64-unknown-linux-musl/release/github-ntfy"
+      ],
+      "options": {
+        "command": "cross build --release --target x86_64-unknown-linux-musl --features vendored-openssl"
+      }
+    },
+    "test": {
+      "executor": "nx:run-commands",
+      "cache": true,
+      "inputs": ["rust", "sharedGlobals"],
+      "options": {
+        "command": "cargo test"
+      }
+    },
+    "lint": {
+      "executor": "nx:run-commands",
+      "cache": true,
+      "inputs": ["rust", "sharedGlobals"],
+      "options": {
+        "command": "cargo clippy -- -D warnings"
+      }
+    },
+    "docker-dev": {
+      "executor": "nx:run-commands",
+      "options": {
+        "command": "docker build -f Dockerfile.dev -t github-ntfy-dev:dev ."
+      }
+    },
+    "docker-build-dev": {
+      "executor": "nx:run-commands",
+      "dependsOn": [
+        "build-musl",
+        {
+          "projects": ["frontend"],
+          "target": "generate"
+        }
+      ],
+      "inputs": ["dockerConfig"],
+      "options": {
+        "commands": [
+          "node scripts/prepare-docker.mjs",
+          "docker build -t github-ntfy-dev:dev docker-build"
+        ],
+        "parallel": false
+      }
+    },
+    "docker-build": {
+      "executor": "nx:run-commands",
+      "dependsOn": [
+        "build-musl",
+        {
+          "projects": ["frontend"],
+          "target": "generate"
+        }
+      ],
+      "inputs": ["dockerConfig"],
+      "options": {
+        "commands": [
+          "node scripts/prepare-docker.mjs",
+          "docker build -t github-ntfy:latest docker-build"
+        ],
+        "parallel": false
+      }
+    },
+    "docker-run": {
+      "executor": "nx:run-commands",
+      "dependsOn": ["docker-dev"],
+      "options": {
+        "command": "docker compose up -d"
+      }
+    },
+    "docker-stop": {
+      "executor": "nx:run-commands",
+      "options": {
+        "command": "docker compose down"
+      }
+    }
+  }
+}

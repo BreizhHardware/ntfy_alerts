@@ -129,3 +129,26 @@ pub async fn send_docker_notification(release: &DockerReleaseInfo, webhook_url: 
         }
     }
 }
+
+pub async fn send_notification(webhook_url: &str, title: &str, message: &str) -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
+    let client = reqwest::Client::new();
+
+    let data = json!({
+        "text": format!("*{}*\n{}", title, message)
+    });
+
+    let response = client.post(webhook_url)
+        .header("Content-Type", "application/json")
+        .json(&data)
+        .send()
+        .await?;
+
+    if response.status().is_success() {
+        info!("Test notification sent to Slack successfully");
+        Ok(())
+    } else {
+        let error_msg = format!("Failed to send test notification to Slack. Status code: {}", response.status());
+        error!("{}", error_msg);
+        Err(error_msg.into())
+    }
+}

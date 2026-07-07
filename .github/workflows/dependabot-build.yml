@@ -1,15 +1,16 @@
-name: Dependabot Build Check
+name: Dependabot Build
 
 on:
   pull_request:
-    branches: [dev]
-
-permissions:
-  contents: read
-  pull-requests: read
+    branches: [ 'main', 'dev' ]
+    paths:
+      - '**/Cargo.toml'
+      - '**/Cargo.lock'
+      - 'web/package.json'
+      - 'web/pnpm-lock.yaml'
 
 jobs:
-  build:
+  build-binary:
     if: ${{ startsWith(github.ref, 'refs/heads/dependabot/') || github.actor == 'dependabot[bot]' }}
     runs-on: ubuntu-latest
     steps:
@@ -45,8 +46,47 @@ jobs:
         run: |
           cross build --release --target x86_64-unknown-linux-musl --features vendored-openssl
 
-      - name: Afficher des informations de débogage
+      - name: Préparer le binaire
         run: |
-          echo "Acteur: ${{ github.actor }}"
-          echo "Référence de la branche: ${{ github.head_ref }}"
-          echo "Event name: ${{ github.event_name }}"
+          mkdir -p release
+          cp target/x86_64-unknown-linux-musl/release/github-ntfy release/github-ntfy
+
+      - name: Upload binaire comme artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: github-ntfy-dependabot
+          path: release/github-ntfy
+
+  build-frontend:
+    if: ${{ github.actor == 'dependabot[bot]' || startsWith(github.ref, 'refs/heads/dependabot/') }}
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Setup PNPM
+        uses: pnpm/action-setup@v2
+        with:
+          version: '10.x'
+          run_install: false
+
+      - name: Build Frontend (Nuxt)
+        run: |
+          cd web
+          pnpm install
+          pnpm generate
+
+      - name: Vérifier le contenu du répertoire output
+        run: |
+          ls -la web/.output/public || echo "Le répertoire .output n'existe pas!"
+
+      - name: Upload frontend comme artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: nuxt-frontend-dependabot
+          path: web/.output/public

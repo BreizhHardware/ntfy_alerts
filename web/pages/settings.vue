@@ -1,0 +1,384 @@
+<template>
+  <div>
+
+    <div class="container mx-auto px-4 py-8">
+      <h1 class="text-2xl font-bold text-white mb-8">Settings</h1>
+
+      <UCard class="mb-8">
+        <template #header>
+          <div class="flex justify-between items-center">
+            <h2 class="text-xl font-semibold">Notification Services</h2>
+          </div>
+        </template>
+
+        <div class="space-y-6">
+          <!-- NTFY -->
+          <div>
+            <div class="flex justify-between items-center mb-2">
+              <h3 class="text-lg font-medium">NTFY</h3>
+              <UButton
+                @click="testNotification('ntfy')"
+                size="sm"
+                color="gray"
+                variant="outline"
+                :loading="testingNotifications.ntfy"
+                :disabled="!settings.ntfy_url"
+              >
+                Tester
+              </UButton>
+            </div>
+            <div class="space-y-2">
+              <UInput
+                v-model="settings.ntfy_url"
+                label="NTFY URL"
+                placeholder="https://ntfy.sh/your-topic"
+                class="w-full"
+              />
+              <UInput
+                v-model="settings.ntfy_username"
+                label="NTFY Username"
+                placeholder="username"
+                class="w-full"
+              />
+              <UInput
+                v-model="settings.ntfy_password"
+                label="NTFY Password"
+                type="password"
+                placeholder="********"
+                class="w-full"
+              />
+              <p class="mt-1 text-xs text-gray-500">
+                Username and password will be used to generate the auth.txt file
+              </p>
+            </div>
+          </div>
+
+          <!-- Discord -->
+          <div>
+            <div class="flex justify-between items-center mb-2">
+              <h3 class="text-lg font-medium">Discord</h3>
+              <UButton
+                @click="testNotification('discord')"
+                size="sm"
+                color="gray"
+                variant="outline"
+                :loading="testingNotifications.discord"
+                :disabled="!settings.discord_webhook_url"
+              >
+                Tester
+              </UButton>
+            </div>
+            <UInput
+              v-model="settings.discord_webhook_url"
+              label="Discord Webhook URL"
+              placeholder="https://discord.com/api/webhooks/..."
+              class="w-full"
+            />
+          </div>
+
+          <!-- Slack -->
+          <div>
+            <div class="flex justify-between items-center mb-2">
+              <h3 class="text-lg font-medium">Slack</h3>
+              <UButton
+                @click="testNotification('slack')"
+                size="sm"
+                color="gray"
+                variant="outline"
+                :loading="testingNotifications.slack"
+                :disabled="!settings.slack_webhook_url"
+              >
+                Tester
+              </UButton>
+            </div>
+            <UInput
+              v-model="settings.slack_webhook_url"
+              label="Slack Webhook URL"
+              placeholder="https://hooks.slack.com/services/..."
+              class="w-full"
+            />
+          </div>
+
+          <!-- Gotify -->
+          <div>
+            <div class="flex justify-between items-center mb-2">
+              <h3 class="text-lg font-medium">Gotify</h3>
+              <UButton
+                @click="testNotification('gotify')"
+                size="sm"
+                color="gray"
+                variant="outline"
+                :loading="testingNotifications.gotify"
+                :disabled="!settings.gotify_url || !settings.gotify_token"
+              >
+                Tester
+              </UButton>
+            </div>
+            <div class="space-y-2">
+              <UInput
+                v-model="settings.gotify_url"
+                label="Gotify URL"
+                placeholder="https://gotify.example.com"
+                class="w-full"
+              />
+              <UInput
+                v-model="settings.gotify_token"
+                label="Gotify Token"
+                placeholder="Axxxxxxxxx.xxxxx"
+                class="w-full"
+              />
+            </div>
+          </div>
+        </div>
+      </UCard>
+
+      <UCard class="mb-8">
+        <template #header>
+          <div class="flex justify-between items-center">
+            <h2 class="text-xl font-semibold">GitHub</h2>
+          </div>
+        </template>
+
+        <div>
+          <UInput
+            v-model="settings.github_token"
+            label="GitHub Token (optional)"
+            placeholder="ghp_xxxxxxxxxxxxxxxx"
+            class="w-full"
+          />
+          <p class="mt-1 text-xs text-gray-500">
+            A GitHub token helps avoid API rate limits for private repositories
+          </p>
+        </div>
+      </UCard>
+
+      <UCard class="mb-8">
+        <template #header>
+          <div class="flex justify-between items-center">
+            <h2 class="text-xl font-semibold">Docker Hub</h2>
+          </div>
+        </template>
+
+        <div class="space-y-4">
+          <UInput
+            v-model="settings.docker_username"
+            label="Docker Hub Username (optional)"
+            placeholder="username"
+            class="w-full"
+          />
+          <UInput
+            v-model="settings.docker_password"
+            label="Docker Hub Password (optional)"
+            type="password"
+            placeholder="********"
+            class="w-full"
+          />
+          <p class="mt-1 text-xs text-gray-500">
+            Docker Hub credentials allow access to private images
+          </p>
+        </div>
+      </UCard>
+
+      <UCard class="mb-8">
+        <template #header>
+          <div class="flex justify-between items-center">
+            <h2 class="text-xl font-semibold">Advanced Settings</h2>
+          </div>
+        </template>
+
+        <div>
+          <UInput
+            v-model="settings.check_interval"
+            label="Check Interval (seconds)"
+            type="number"
+            min="60"
+            placeholder="3600"
+            class="w-full"
+          />
+          <p class="mt-1 text-xs text-gray-500">
+            Default interval is 3600 seconds (1 hour)
+          </p>
+        </div>
+      </UCard>
+
+      <div v-if="error" class="p-3 mb-6 text-sm text-red-500 bg-red-100 rounded-md">
+        {{ error }}
+      </div>
+
+      <div v-if="success" class="p-3 mb-6 text-sm text-green-500 bg-green-100 rounded-md">
+        {{ success }}
+      </div>
+
+      <div class="flex justify-end">
+        <UButton
+          @click="saveSettings"
+          color="primary"
+          :loading="loading"
+        >
+          Save Changes
+        </UButton>
+      </div>
+    </div>
+
+    <AppFooter />
+  </div>
+</template>
+
+<script setup>
+const auth = useAuth();
+const router = useRouter();
+
+// Check if user is authenticated
+onMounted(async () => {
+  if (!auth.isAuthenticated.value) {
+    return router.push('/login');
+  }
+
+  // Load current settings
+  await loadSettings();
+});
+
+const settings = reactive({
+  ntfy_url: '',
+  ntfy_username: '',
+  ntfy_password: '',
+  github_token: '',
+  docker_username: '',
+  docker_password: '',
+  gotify_url: '',
+  gotify_token: '',
+  discord_webhook_url: '',
+  slack_webhook_url: '',
+  check_interval: 3600
+});
+
+const error = ref('');
+const success = ref('');
+const loading = ref(false);
+const testingNotifications = reactive({
+  ntfy: false,
+  discord: false,
+  slack: false,
+  gotify: false
+});
+
+// Load current settings
+async function loadSettings() {
+  try {
+    loading.value = true;
+
+    const response = await fetch('/settings', {
+      method: 'GET',
+      headers: {
+        'Authorization': auth.token.value
+      }
+    });
+
+    if (!response.ok) {
+      const data = await response.json();
+      throw new Error(data.message || 'Error loading settings');
+    }
+
+    const data = await response.json();
+
+    if (data.success && data.data) {
+      // Update settings with loaded values
+      Object.assign(settings, data.data);
+      
+      // Parse NTFY auth string if it exists
+      if (data.data.auth) {
+        const authParts = data.data.auth.split(':');
+        if (authParts.length === 2) {
+          settings.ntfy_username = authParts[0];
+          settings.ntfy_password = authParts[1];
+        }
+      }
+    }
+  } catch (err) {
+    error.value = err.message || 'An error occurred while loading settings';
+  } finally {
+    loading.value = false;
+  }
+}
+
+// Function to save settings
+async function saveSettings() {
+  try {
+    loading.value = true;
+    error.value = '';
+    success.value = '';
+
+    // Prepare settings
+    const now = new Date().toISOString();
+    const settingsData = {
+      ...settings,
+      last_updated: now
+    };
+
+    // Format NTFY auth if credentials are provided
+    if (settings.ntfy_url && settings.ntfy_username && settings.ntfy_password) {
+      // Create auth string in the format expected by the backend
+      const authString = `${settings.ntfy_username}:${settings.ntfy_password}`;
+      settingsData.auth = authString;
+    }
+
+    // Send settings to server
+    const response = await fetch('/settings', {
+      method: 'PUT',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': auth.token.value
+      },
+      body: JSON.stringify(settingsData)
+    });
+
+    if (!response.ok) {
+      const data = await response.json();
+      throw new Error(data.message || 'Error saving settings');
+    }
+
+    success.value = 'Settings updated successfully';
+  } catch (err) {
+    error.value = err.message || 'An error occurred while saving settings';
+  } finally {
+    loading.value = false;
+  }
+}
+
+// Function to test notifications
+async function testNotification(type) {
+  try {
+    // Set loading state for the specific notification type
+    testingNotifications[type] = true;
+    error.value = '';
+    success.value = '';
+
+    // Send test notification via our API endpoint
+    const response = await fetch(`/test/${type}`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': auth.token.value
+      }
+    });
+
+    if (!response.ok) {
+      const data = await response.json();
+      throw new Error(data.message || 'Error sending test notification');
+    }
+
+    const data = await response.json();
+
+    if (data.success) {
+      success.value = `Notification de test envoyée avec succès via ${type.toUpperCase()}`;
+    } else {
+      throw new Error(data.message || 'Error sending test notification');
+    }
+  } catch (err) {
+    error.value = err.message || 'Une erreur est survenue lors de l\'envoi de la notification de test';
+  } finally {
+    // Reset loading state for the specific notification type
+    testingNotifications[type] = false;
+  }
+}
+</script>

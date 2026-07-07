@@ -1,5 +1,5 @@
 use log::{error, info};
-use reqwest::header::{HeaderMap, HeaderValue, AUTHORIZATION};
+use reqwest::header::{HeaderMap, HeaderValue};
 use crate::models::{GithubReleaseInfo, DockerReleaseInfo};
 
 pub async fn send_github_notification(release: &GithubReleaseInfo, auth: &str, ntfy_url: &str) {
@@ -80,5 +80,28 @@ pub async fn send_docker_notification(release: &DockerReleaseInfo, auth: &str, n
         Err(e) => {
             error!("Error sending to Ntfy: {}", e);
         }
+    }
+}
+
+pub async fn send_notification(ntfy_url: &str, title: &str, message: &str) -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
+    let client = reqwest::Client::new();
+
+    let mut headers = HeaderMap::new();
+    headers.insert("Title", HeaderValue::from_str(title)?);
+    headers.insert("Priority", HeaderValue::from_static("default"));
+
+    let response = client.post(ntfy_url)
+        .headers(headers)
+        .body(message.to_string())
+        .send()
+        .await?;
+
+    if response.status().is_success() {
+        info!("Test notification sent to NTFY successfully");
+        Ok(())
+    } else {
+        let error_msg = format!("Failed to send test notification to NTFY. Status code: {}", response.status());
+        error!("{}", error_msg);
+        Err(error_msg.into())
     }
 }

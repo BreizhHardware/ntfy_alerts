@@ -1,9 +1,8 @@
-name: Build et Push Docker Dev Image
+name: Build et Push Docker PR Image
 
 on:
-  push:
-    branches:
-      - dev
+  pull_request:
+    types: [opened, synchronize, reopened]
 
 jobs:
   build-binary:
@@ -50,7 +49,7 @@ jobs:
       - name: Upload binaire comme artifact
         uses: actions/upload-artifact@v4
         with:
-          name: github-ntfy
+          name: github-ntfy-pr
           path: release/github-ntfy
 
   build-frontend:
@@ -77,15 +76,15 @@ jobs:
           pnpm install
           pnpm generate
 
-      - name: Vérifier le contenu du répertoire output/public
+      - name: Vérifier le contenu du répertoire output
         run: |
-          ls -la web/.output/public || echo "Le répertoire .output/public n'existe pas!"
+          ls -la web/.output/public || echo "Le répertoire .output n'existe pas!"
 
       - name: Upload frontend comme artifact
         uses: actions/upload-artifact@v4
         with:
-          name: nuxt-frontend
-          path: web/.output/public  # Cibler spécifiquement le répertoire public
+          name: nuxt-frontend-pr
+          path: web/.output/public
 
   docker-build-push:
     if: ${{ github.actor != 'dependabot[bot]' && !startsWith(github.ref, 'refs/heads/dependabot/') }}
@@ -95,7 +94,7 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
 
-      - name: Configurer Docker Buildx
+      - name: Configurer Docker
         uses: docker/setup-buildx-action@v3
 
       - name: Login Docker Hub
@@ -104,16 +103,21 @@ jobs:
           username: ${{ secrets.DOCKER_USERNAME }}
           password: ${{ secrets.DOCKER_PASSWORD }}
 
-      - name: Télécharger le binaire
+      - name: Extraire le numéro de PR
+        run: |
+          PR_NUMBER=$(echo $GITHUB_REF | awk 'BEGIN { FS = "/" } ; { print $3 }')
+          echo "PR_NUMBER=$PR_NUMBER" >> $GITHUB_ENV
+
+      - name: Télécharger l'exécutable binaire
         uses: actions/download-artifact@v4
         with:
-          name: github-ntfy
+          name: github-ntfy-pr
           path: binaries
 
       - name: Télécharger le frontend
         uses: actions/download-artifact@v4
         with:
-          name: nuxt-frontend
+          name: nuxt-frontend-pr
           path: web/.output/public
 
       - name: Préparer les fichiers pour Docker
@@ -133,5 +137,5 @@ jobs:
         with:
           context: docker-build
           push: true
-          tags: ${{ secrets.DOCKER_USERNAME }}/github-ntfy:dev
+          tags: ${{ secrets.DOCKER_USERNAME }}/github-ntfy:pr-${{ env.PR_NUMBER }}
           file: docker-build/Dockerfile
